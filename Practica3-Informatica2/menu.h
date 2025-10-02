@@ -8,15 +8,29 @@ using namespace std;
 const int MAX_LONG = 200;
 
 /**
- * @brief Modifica el saldo de un usuario retirando un monto especificado.
+ * @brief Consulta el saldo de un usuario y cobra 1000 COP por la operación.
+ *
+ * Busca la cédula en el arreglo de usuarios, muestra su saldo actual
+ * y descuenta 1000 COP por el costo de la consulta.
+ *
+ * @param lineas Arreglo de usuarios en formato de texto
+ * @param numUsuarios Cantidad de usuarios registrados
+ * @param cedulaBuscada Cédula del usuario que consulta
+ * @return true si la consulta fue exitosa
+ * @return false si no se encontró el usuario
+ */
+bool consultarSaldoUsuario(char** lineas, int numUsuarios, const char* cedulaBuscada);
+
+/**
+ * @brief Modifica el saldo de un usuario retirando un monto especificado más 1000 COP de comisión.
  *
  * Busca la cédula en el arreglo de usuarios y, si existe suficiente saldo,
- * descuenta el monto solicitado.
+ * descuenta el monto solicitado MÁS 1000 COP de costo por transacción.
  *
  * @param lineas Arreglo de usuarios en formato de texto
  * @param numUsuarios Cantidad de usuarios registrados
  * @param cedulaBuscada Cédula del usuario que realiza el retiro
- * @param montoRetiro Monto a retirar
+ * @param montoRetiro Monto a retirar (sin incluir la comisión)
  * @return true si la transacción fue exitosa
  * @return false si no se encontró el usuario o no había saldo suficiente
  */
@@ -36,6 +50,7 @@ bool validarCliente(const char cedula[]);
 void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int numAdmins);
 void menuUsuario(char** usuarios, int numUsuarios);
 void menuPrincipal(char**& usuarios, int& numUsuarios, char** admins, int numAdmins);
+
 /**
  * @brief Registra un nuevo usuario en el sistema.
  *
@@ -64,8 +79,7 @@ void copiarCadena(char* destino, const char* origen);
  * @param destino Cadena base que recibirá la concatenación
  * @param origen Cadena que se añadirá al final de destino
  */
-
-void concatenar(char* destino, const char* origen) ;
+void concatenar(char* destino, const char* origen);
 
 /**
  * @brief Compara dos cadenas de caracteres.

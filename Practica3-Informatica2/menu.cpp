@@ -43,7 +43,8 @@ void extraerCedulaYClave(const char* linea, char* cedula, int maxCedula, char* c
 
     // Copiar clave hasta fin de línea o CR/LF
     j = 0;
-    while (linea[i] != '\0' && linea[i] != '\r' && linea[i] != '\n' && j < maxClave - 1) clave[j++] = linea[i++];
+    while (linea[i] != '\0' && linea[i] != ',' && linea[i] != '\r' && linea[i] != '\n' && j < maxClave - 1)
+        clave[j++] = linea[i++];
     clave[j] = '\0';
 
     // Limpiar espacios al inicio y final
@@ -54,8 +55,10 @@ void extraerCedulaYClave(const char* linea, char* cedula, int maxCedula, char* c
 // ---- Menú administrador ----
 void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int numAdmins) {
     char cedulaAdmin[50], claveIngresada[50];
-    cout << "\n--- Acceso Administrador ---\n";
-    cout << "Ingrese su cédula de administrador: ";
+    cout << "\n=================================\n";
+    cout << "    ACCESO ADMINISTRADOR\n";
+    cout << "=================================\n";
+    cout << "Cédula de administrador: ";
     cin >> cedulaAdmin;
     trim(cedulaAdmin);
 
@@ -65,7 +68,7 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
         extraerCedulaYClave(admins[i], cedulaArchivo, sizeof(cedulaArchivo), claveArchivo, sizeof(claveArchivo));
 
         if (cadenasIguales(cedulaArchivo, cedulaAdmin)) {
-            cout << "Ingrese su contraseña de administrador: ";
+            cout << "Contraseña: ";
             cin >> claveIngresada;
             trim(claveIngresada);
 
@@ -77,7 +80,7 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     }
 
     if (!valido) {
-        cout << "Credenciales inválidas. Verifique cédula o clave.\n";
+        cout << "\n Credenciales inválidas.\n";
         return;
     }
 
@@ -85,8 +88,10 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     char cedula[50], clave[50], nombre[100];
     int saldoInicial;
 
-    cout << "\n--- Registrar Nuevo Usuario ---\n";
-    cout << "Ingrese la cédula del nuevo usuario: ";
+    cout << "\n=================================\n";
+    cout << "   REGISTRAR NUEVO USUARIO\n";
+    cout << "=================================\n";
+    cout << "Cédula del nuevo usuario: ";
     cin >> cedula;
     trim(cedula);
 
@@ -95,20 +100,20 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
         char cedulaUsr[50], claveUsr[50];
         extraerCedulaYClave(usuarios[i], cedulaUsr, sizeof(cedulaUsr), claveUsr, sizeof(claveUsr));
         if (cadenasIguales(cedulaUsr, cedula)) {
-            cout << "Ya existe un usuario con esa cédula.\n";
+            cout << "\n Ya existe un usuario con esa cédula.\n";
             return;
         }
     }
 
-    cout << "Ingrese la clave: ";
+    cout << "Clave: ";
     cin >> clave;
     trim(clave);
 
-    cout << "Ingrese el nombre completo: ";
-    cin.ignore();              // limpia salto de línea pendiente
-    cin.getline(nombre, 100);  // permite espacios
+    cout << "Nombre completo: ";
+    cin.ignore();
+    cin.getline(nombre, 100);
 
-    cout << "Ingrese el saldo inicial: ";
+    cout << "Saldo inicial: ";
     cin >> saldoInicial;
 
     // Crear línea: "cedula,clave,nombre,saldo COP"
@@ -126,44 +131,104 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     concatenar(nuevoUsuario, saldoStr);
     concatenar(nuevoUsuario, " COP");
 
-    usuarios[numUsuarios] = nuevoUsuario;
+    // Crear nuevo arreglo más grande
+    char** nuevosUsuarios = new char*[numUsuarios + 1];
+    for (int i = 0; i < numUsuarios; i++) {
+        nuevosUsuarios[i] = usuarios[i];
+    }
+    nuevosUsuarios[numUsuarios] = nuevoUsuario;
+
+    delete[] usuarios;
+    usuarios = nuevosUsuarios;
     numUsuarios++;
 
     // Guardar cambios en archivo
     guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
-    cout << "Usuario agregado correctamente.\n";
+    cout << "\nUsuario agregado correctamente.\n";
 }
 
 // ---- Menú cliente ----
 void menuUsuario(char** usuarios, int numUsuarios) {
     char cedula[50], claveIngresada[50];
-    int monto;
 
-    cout << "\n--- Menu Usuario ---\n";
-    cout << "Ingrese su cédula: ";
+    cout << "\n=================================\n";
+    cout << "        MENÚ USUARIO\n";
+    cout << "=================================\n";
+    cout << "Cédula: ";
     cin >> cedula;
     trim(cedula);
 
-    cout << "Ingrese su clave: ";
+    cout << "Clave: ";
     cin >> claveIngresada;
     trim(claveIngresada);
 
-    bool valido = false;
+    // Buscar y validar usuario
+    bool encontrado = false;
     for (int i = 0; i < numUsuarios; i++) {
         char cedulaArchivo[100], claveArchivo[100];
         extraerCedulaYClave(usuarios[i], cedulaArchivo, sizeof(cedulaArchivo), claveArchivo, sizeof(claveArchivo));
 
-        if (cadenasIguales(cedulaArchivo, cedula) && cadenasIguales(claveArchivo, claveIngresada)) {
-            valido = true;
-            cout << "Credenciales válidas. Ingrese monto a retirar: ";
-            cin >> monto;
-            modificarDineroUsuario(usuarios, numUsuarios, cedula, monto);
-            guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
+        if (cadenasIguales(cedulaArchivo, cedula)) {
+            if (cadenasIguales(claveArchivo, claveIngresada)) {
+                encontrado = true;
+
+                // Mostrar submenú de operaciones
+                bool continuar = true;
+                while (continuar) {
+                    int opcion;
+                    cout << "\n=================================\n";
+                    cout << "   OPERACIONES DISPONIBLES\n";
+                    cout << "=================================\n";
+                    cout << "1. Consultar saldo (Costo: 1000 COP)\n";
+                    cout << "2. Retirar dinero (Costo: 1000 COP + monto)\n";
+                    cout << "3. Volver al menú principal\n";
+                    cout << "=================================\n";
+                    cout << "Opción: ";
+                    cin >> opcion;
+
+                    switch (opcion) {
+                    case 1:
+                        // Consultar saldo
+                        if (consultarSaldoUsuario(usuarios, numUsuarios, cedula)) {
+                            guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
+                        }
+                        break;
+
+                    case 2:
+                        // Retirar dinero
+                        {
+                            int monto;
+                            cout << "\nMonto a retirar: ";
+                            cin >> monto;
+
+                            if (monto <= 0) {
+                                cout << "\n El monto debe ser mayor a cero.\n";
+                            } else {
+                                if (modificarDineroUsuario(usuarios, numUsuarios, cedula, monto)) {
+                                    guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
+                                }
+                            }
+                        }
+                        break;
+
+                    case 3:
+                        cout << "\n👋 Volviendo al menú principal...\n";
+                        continuar = false;
+                        break;
+
+                    default:
+                        cout << "\n Opción inválida.\n";
+                    }
+                }
+            } else {
+                cout << "\n Clave incorrecta.\n";
+            }
             break;
         }
     }
-    if (!valido) {
-        cout << "Credenciales inválidas. Verifique cédula o clave.\n";
+
+    if (!encontrado) {
+        cout << "\n Cédula no encontrada en el sistema.\n";
     }
 }
 
@@ -171,12 +236,23 @@ void menuUsuario(char** usuarios, int numUsuarios) {
 void menuPrincipal(char**& usuarios, int& numUsuarios, char** admins, int numAdmins) {
     int opcion;
     do {
-        cout << "\n--- Menu Principal ---\n";
-        cout << "1. Administrador\n";
-        cout << "2. Usuario\n";
-        cout << "3. Salir\n";
+        cout << "\n#################################\n";
+        cout << "#       SISTEMA BANCARIO        #\n";
+        cout << "#################################\n";
+        cout << "# 1. Administrador              #\n";
+        cout << "# 2. Usuario                    #\n";
+        cout << "# 3. Salir                      #\n";
+        cout << "#################################\n";
         cout << "Seleccione una opción: ";
         cin >> opcion;
+
+        // Limpiar buffer de entrada en caso de entrada inválida
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "\n Entrada inválida. Ingrese un número.\n";
+            continue;
+        }
 
         switch (opcion) {
         case 1:
@@ -186,10 +262,10 @@ void menuPrincipal(char**& usuarios, int& numUsuarios, char** admins, int numAdm
             menuUsuario(usuarios, numUsuarios);
             break;
         case 3:
-            cout << "Saliendo del sistema...\n";
+            cout << "\n👋 Gracias por usar el sistema. ¡Hasta pronto!\n";
             break;
         default:
-            cout << "Opción inválida.\n";
+            cout << "\n Opción inválida. Seleccione 1, 2 o 3.\n";
         }
     } while (opcion != 3);
 }
