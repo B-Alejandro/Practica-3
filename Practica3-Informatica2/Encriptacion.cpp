@@ -140,3 +140,79 @@ unsigned char* encriptarBits(const unsigned char* binary, int size, int semilla)
     return codificado;
 }
 
+/**
+ * @brief Desencripta una cadena binaria usando el mismo esquema de bloques y semilla.
+ *
+ * El proceso divide la cadena en bloques de tamaño `semilla` y aplica reglas inversas:
+ * - Primer bloque: se invierten todos los bits.
+ * - Bloques siguientes:
+ *   - Si el bloque anterior original tenía igual número de 1s y 0s → invertir todos los bits.
+ *   - Si el bloque anterior original tenía más ceros que unos → invertir cada 2 bits.
+ *   - Si el bloque anterior original tenía más unos que ceros → invertir cada 3 bits.
+ *
+ * @param binary Cadena binaria encriptada (unsigned char*).
+ * @param size Número total de bits en la entrada.
+ * @param semilla Tamaño de los bloques de procesamiento.
+ * @return unsigned char* Cadena desencriptada (memoria dinámica).
+ *
+ * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
+ */
+unsigned char* desencriptarBits(const unsigned char* binary, int size, int semilla) {
+    unsigned char* decodificado = new unsigned char[size + 1];
+    int pos = 0;
+
+    // "anterior" guarda el último bloque desencriptado
+    unsigned char* anterior = nullptr;
+
+    for (int i = 0; i < size; i += semilla) {
+        int len = (i + semilla <= size) ? semilla : (size - i);
+
+        // Copiar bloque encriptado actual
+        unsigned char* bloque = new unsigned char[len + 1];
+        for (int k = 0; k < len; k++) {
+            bloque[k] = binary[i + k];
+        }
+        bloque[len] = '\0';
+
+        unsigned char* procesado = nullptr;
+
+        if (i == 0) {
+            // Primer bloque → mismo que encriptación (invertir todo)
+            procesado = invertirBits(bloque, len);
+        } else {
+            // Contar 1s y 0s en el bloque anterior desencriptado
+            int unos = 0, ceros = 0;
+            for (int j = 0; anterior[j] != '\0'; j++) {
+                if (anterior[j] == '1') unos++;
+                else ceros++;
+            }
+
+            // Aplicar la misma transformación que encriptación
+            if (unos == ceros) {
+                procesado = invertirBits(bloque, len);
+            } else if (ceros > unos) {
+                procesado = invertirCadaNBits(bloque, len, 2);
+            } else {
+                procesado = invertirCadaNBits(bloque, len, 3);
+            }
+        }
+
+        // Copiar resultado en salida final
+        for (int k = 0; procesado[k] != '\0'; k++) {
+            decodificado[pos++] = procesado[k];
+        }
+
+        // Liberar memoria temporal
+        delete[] bloque;
+        if (anterior) delete[] anterior;
+
+        // Guardar bloque original recién recuperado
+        anterior = procesado;
+    }
+
+    decodificado[pos] = '\0';
+
+    if (anterior) delete[] anterior;
+
+    return decodificado;
+}

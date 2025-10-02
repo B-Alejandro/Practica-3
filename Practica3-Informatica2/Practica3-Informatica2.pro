@@ -7,7 +7,10 @@ SOURCES += \
         BinarioChar.cpp \
         Encriptacion.cpp \
         ManipulacionDeArchivos.cpp \
-        main.cpp
+        funcionesAuxiliares.cpp \
+        main.cpp \
+        menu.cpp \
 
 HEADERS += \
-    Sistema.h
+    Sistema.h \
+    menu.h

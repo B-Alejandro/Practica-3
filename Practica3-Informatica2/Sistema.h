@@ -48,7 +48,7 @@ unsigned char* encriptarBits(const unsigned char* binary, int size, int semilla)
  * @param size Número de caracteres a escribir.
  * @return true si se pudo crear/escribir, false en caso de error.
  */
-bool crearArchivoConTexto(const char* rutaArchivo, unsigned char* texto, int size);
+void guardarUsuariosEnArchivo(char** usuarios, int numUsuarios, const char* ruta);
 
 /**
  * @brief Lee el contenido de un archivo como arreglo de caracteres.
@@ -89,5 +89,6 @@ unsigned char* binarioAtexto(unsigned char* texto, int size);
  */
 unsigned char* textoAbinario(unsigned char* text, int size);
 
+char** leerArchivoLineas(const char* rutaArchivo, int& numLineas) ;
 #endif // SISTEMA_H
 

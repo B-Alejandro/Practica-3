@@ -3,85 +3,71 @@
 #include <fstream>
     using namespace std;
 
-/**
- * @brief Crea un archivo y escribe un texto dentro de él.
- *
- * Esta función abre (o crea si no existe) un archivo en modo binario
- * y escribe en él el contenido de un arreglo de bytes.
- *
- * - Si el archivo ya existe, será sobrescrito.
- * - Si no se puede abrir o crear, se muestra un mensaje de error en consola.
- *
- * @param rutaArchivo Ruta del archivo a crear o sobrescribir (cadena tipo C).
- * @param texto Puntero al arreglo de bytes a escribir.
- * @param size Número de bytes a escribir en el archivo.
- * @return true si el archivo se creó y escribió correctamente, false en caso de error.
- */
-bool crearArchivoConTexto(const char* rutaArchivo, unsigned char* texto, int size) {
-    // Abrir archivo en modo binario (crea o sobrescribe)
-    ofstream archivo(rutaArchivo, ios::binary);
-
-    // Validar apertura
-    if (!archivo.is_open()) {
-        cerr << "No se pudo crear o abrir el archivo." << endl;
-        return false;
+void guardarUsuariosEnArchivo(char** usuarios, int numUsuarios, const char* ruta) {
+    ofstream archivo(ruta, ios::trunc); // sobrescribe archivo
+    if (!archivo) {
+        cout << "Error al abrir el archivo de usuarios.\n";
+        return;
     }
 
-    // Escribir contenido en el archivo
-    archivo.write(reinterpret_cast<const char*>(texto), size);
+    for (int i = 0; i < numUsuarios; i++) {
+        archivo << usuarios[i] << "\n";  // cada línea en formato cedula,clave,nombre,saldo COP
+    }
 
-    // Cerrar archivo
     archivo.close();
-
-    return true;
 }
-
 /**
- * @brief Lee un archivo y devuelve su contenido como un arreglo dinámico.
+ * @brief Lee un archivo y devuelve sus líneas como un arreglo dinámico de cadenas.
  *
- * Abre un archivo en modo binario, obtiene su tamaño y lo carga
- * completamente en memoria. El arreglo devuelto incluye un carácter
- * nulo adicional (`'\0'`) al final para permitir imprimirlo como string.
+ * Cada línea se guarda como un `char*` en un arreglo de punteros (`char**`).
  *
- * @note El usuario es responsable de liberar la memoria con `delete[]`.
+ * @note El usuario es responsable de liberar la memoria con:
+ *       primero cada `delete[] lineas[i]` y luego `delete[] lineas`.
  *
  * @param rutaArchivo Ruta del archivo a leer (cadena tipo C).
- * @param size Referencia donde se almacenará el tamaño del archivo leído.
- * @return unsigned char* Puntero al contenido leído, o nullptr si ocurre un error.
+ * @param numLineas Referencia donde se almacenará el número de líneas leídas.
+ * @return char** Arreglo dinámico de líneas, o nullptr si ocurre un error.
  */
-
-unsigned char* leerArchivoACharArray(const char* rutaArchivo, int& size) {
-    std::ifstream archivo(rutaArchivo, std::ios::binary);
+char** leerArchivoLineas(const char* rutaArchivo, int& numLineas) {
+    std::ifstream archivo(rutaArchivo);
     if (!archivo.is_open()) {
         std::cerr << "No se pudo abrir el archivo." << std::endl;
-        size = 0;
+        numLineas = 0;
         return nullptr;
     }
 
-    // Primero contar los caracteres
-    size = 0;
-    char c;
-    while (archivo.get(c)) {
-        size++;
+    // Contar cuántas líneas tiene el archivo
+    numLineas = 0;
+    std::string temp;
+    while (std::getline(archivo, temp)) {
+        numLineas++;
     }
 
-    // Reservar memoria (+1 para '\0')
-    unsigned char* buffer = new unsigned char[size + 1];
+    if (numLineas == 0) {
+        return nullptr;
+    }
 
-    // Volvemos al inicio del archivo
+    // Reservar arreglo de punteros a char*
+    char** lineas = new char*[numLineas];
+
+    // Volver al inicio del archivo
     archivo.clear();
     archivo.seekg(0, std::ios::beg);
 
-    // Leer caracter por caracter y guardarlo en el buffer
+    // Leer línea por línea y copiarlas
     int i = 0;
-    while (archivo.get(c)) {
-        buffer[i++] = static_cast<unsigned char>(c);
+    while (std::getline(archivo, temp)) {
+        // Reservar memoria para la línea (+1 para '\0')
+        lineas[i] = new char[temp.size() + 1];
+        std::copy(temp.begin(), temp.end(), lineas[i]);
+        lineas[i][temp.size()] = '\0'; // terminador nulo
+        i++;
     }
 
-    buffer[size] = '\0'; // terminador nulo
     archivo.close();
-    return buffer;
+    return lineas;
 }
+
 /**
  * @brief Muestra en consola el contenido de un arreglo de bytes.
  *

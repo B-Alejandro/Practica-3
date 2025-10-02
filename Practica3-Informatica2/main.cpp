@@ -1,41 +1,34 @@
 #include <iostream>
-#include "Sistema.h"
+#include "menu.h"
+#include "sistema.h"
 using namespace std;
 
+// MAIN
 int main() {
-    // Ruta donde se guardará el archivo binario
-    char rutaDatos[] = "../../Datos/datos.bin";
+    char rutaUsuarios[] = "../../Datos/usuarios.txt";
+    char rutaAdmins[] = "../../Datos/sudo.txt";
 
-    // Datos de prueba a guardar (abcd)
-    unsigned char datosPrueba[] = {'a', 'b', 'c', 'd'};
+    int numUsuarios = 0, numAdmins = 0;
+    char** usuarios = leerArchivoLineas(rutaUsuarios, numUsuarios);
+    char** admins = leerArchivoLineas(rutaAdmins, numAdmins);
 
-    // Convertir texto a binario (cada char -> 8 bits)
-    unsigned char* datosBinario = textoAbinario(datosPrueba, 4);
-
-    // Guardar el archivo binario (como cadena de '0' y '1')
-    if (crearArchivoConTexto(rutaDatos, datosBinario, 4 * 8)) {
-        cout << "Archivo datos.bin creado correctamente.\n";
-    } else {
-        cerr << "Error: no se pudo crear el archivo.\n";
-        delete[] datosBinario;
+    if (usuarios == nullptr || numUsuarios == 0) {
+        cerr << "No se pudieron cargar usuarios.\n";
+        return 1;
+    }
+    if (admins == nullptr || numAdmins == 0) {
+        cerr << "No se pudieron cargar administradores.\n";
         return 1;
     }
 
-    // Leer archivo
-    int size = 0;
-    unsigned char* data = leerArchivoACharArray(rutaDatos, size);
+    menuPrincipal(usuarios, numUsuarios, admins, numAdmins);
 
-    if (data != nullptr && size > 0) {
-        cout << "\n\n----- Contenido del archivo leído -----\n\n";
-        mostrarContenido(data, size);
+    // Liberar memoria
+    for (int i = 0; i < numUsuarios; i++) delete[] usuarios[i];
+    delete[] usuarios;
 
-        delete[] data; // liberar memoria
-    } else {
-        cerr << "Error: no se pudo leer el archivo o está vacío.\n";
-    }
-
-    // Liberar binario generado
-    delete[] datosBinario;
+    for (int i = 0; i < numAdmins; i++) delete[] admins[i];
+    delete[] admins;
 
     return 0;
 }
