@@ -12,5 +12,6 @@ SOURCES += \
         menu.cpp \
 
 HEADERS += \
+    Encriptacion.h \
     Sistema.h \
     menu.h

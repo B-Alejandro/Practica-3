@@ -1,218 +1,192 @@
 #include <iostream>
-    using namespace std;
+#include "Encriptacion.h"
+using namespace std;
 
-/**
- * @brief Invierte cada bloque de N bits dentro de una cadena binaria.
- *
- * Recorre el arreglo binario en bloques de tamaño `n` y cambia cada bit:
- * - '1' → '0'
- * - '0' → '1'
- *
- * Si el último bloque no tiene tamaño completo `n`, se invierte lo que alcance.
- *
- * @param block Cadena binaria de entrada (como unsigned char*).
- * @param size Número de bits en la cadena de entrada.
- * @param n Tamaño del bloque a invertir.
- * @return unsigned char* Nueva cadena con los bits invertidos (memoria dinámica).
- *
- * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
- */
-unsigned char* invertirCadaNBits(const unsigned char* block, int size, int n) {
-    // Crear copia del bloque para el resultado
-    unsigned char* resultado = new unsigned char[size + 1];
+// ===================== FUNCIONES AUXILIARES =====================
 
-    // Recorrer bloques de tamaño n
-    for (int i = 0; i < size; i += n) {
-        for (int j = 0; j < n && i + j < size; j++) {
-            resultado[i + j] = (block[i + j] == '1') ? '0' : '1';
+// Calcula la longitud de una cadena terminada en '\0'
+int longitud(const unsigned char* texto) {
+    int len = 0;
+    while (texto[len] != '\0') len++;
+    return len;
+}
+
+// Copia manualmente len caracteres de origen a destino
+void copiar(unsigned char* destino, const unsigned char* origen, int len) {
+    for (int i = 0; i < len; i++) destino[i] = origen[i];
+}
+
+// ===================== CONVERSIÓN BINARIO ↔ TEXTO =====================
+
+
+
+// ===================== INVERSIÓN DE BITS =====================
+
+// Invierte todos los bits ('0' ↔ '1')
+unsigned char* invertirBits(const unsigned char* bloque, int len) {
+    unsigned char* res = new unsigned char[len + 1];
+    for (int i = 0; i < len; i++) {
+        if (bloque[i] == '0') res[i] = '1';
+        else if (bloque[i] == '1') res[i] = '0';
+        else res[i] = bloque[i];
+    }
+    res[len] = '\0';
+    return res;
+}
+
+// Invierte cada bloque de N bits dentro del arreglo
+unsigned char* invertirCadaNBits(unsigned char* bloque, int len, int n) {
+    unsigned char* res = new unsigned char[len + 1];
+    copiar(res, bloque, len);
+    res[len] = '\0';
+
+    for (int i = 0; i < len; i += n) {
+        for (int j = 0; j < n && i + j < len; j++) {
+            res[i + j] = (res[i + j] == '0') ? '1' : '0';
         }
     }
 
-    // Finalizar con terminador nulo estilo C
-    resultado[size] = '\0';
-    return resultado;
+    return res;
 }
 
-/**
- * @brief Invierte todos los bits de una cadena binaria.
- *
- * Cambia cada bit de la cadena:
- * - '1' → '0'
- * - '0' → '1'
- *
- * @param block Cadena binaria de entrada (unsigned char*).
- * @param size Número de bits en la cadena de entrada.
- * @return unsigned char* Nueva cadena con bits invertidos (memoria dinámica).
- *
- * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
- */
-unsigned char* invertirBits(const unsigned char* block, int size) {
-    unsigned char* resultado = new unsigned char[size + 1];
+// ===================== ENCRIPTACIÓN DE BITS =====================
 
-    // Invertir bit por bit
-    for (int i = 0; i < size; i++) {
-        resultado[i] = (block[i] == '1') ? '0' : '1';
-    }
-
-    resultado[size] = '\0';
-    return resultado;
-}
-
-/**
- * @brief Encripta una cadena binaria usando un esquema basado en bloques y semilla.
- *
- * El proceso divide la cadena en bloques de tamaño `semilla` y aplica reglas:
- * - Primer bloque: se invierten todos los bits.
- * - Bloques siguientes:
- *   - Si el bloque anterior tiene igual número de 1s y 0s → invertir todos los bits.
- *   - Si el bloque anterior tiene más ceros que unos → invertir cada 2 bits.
- *   - Si el bloque anterior tiene más unos que ceros → invertir cada 3 bits.
- *
- * @param binary Cadena binaria de entrada (unsigned char*).
- * @param size Número total de bits en la entrada.
- * @param semilla Tamaño de los bloques de procesamiento.
- * @return unsigned char* Cadena resultante encriptada (memoria dinámica).
- *
- * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
- */
 unsigned char* encriptarBits(const unsigned char* binary, int size, int semilla) {
-    // Cadena de salida
     unsigned char* codificado = new unsigned char[size + 1];
     int pos = 0;
-
-    // "anterior" guarda el último bloque procesado
     unsigned char* anterior = nullptr;
 
-    // Recorrer la entrada en bloques de longitud semilla
     for (int i = 0; i < size; i += semilla) {
-        // Longitud real del bloque (el último puede ser más pequeño)
         int len = (i + semilla <= size) ? semilla : (size - i);
 
-        // Copiar bloque actual en memoria nueva
+        // Copiar bloque actual
         unsigned char* bloque = new unsigned char[len + 1];
-        for (int k = 0; k < len; k++) {
-            bloque[k] = binary[i + k];
-        }
+        copiar(bloque, binary + i, len);
         bloque[len] = '\0';
 
         unsigned char* procesado = nullptr;
 
         if (i == 0) {
-            // Primer bloque → invertir todos los bits
+            // Primer bloque → invertir bits
             procesado = invertirBits(bloque, len);
         } else {
-            // Contar 1s y 0s en el bloque anterior procesado
+            // Contar 1s y 0s del bloque anterior
             int unos = 0, ceros = 0;
             for (int j = 0; anterior[j] != '\0'; j++) {
                 if (anterior[j] == '1') unos++;
-                else ceros++;
+                else if (anterior[j] == '0') ceros++;
             }
 
-            // Decidir la operación según las reglas
-            if (unos == ceros) {
+            if (unos == ceros)
                 procesado = invertirBits(bloque, len);
-            } else if (ceros > unos) {
+            else if (ceros > unos)
                 procesado = invertirCadaNBits(bloque, len, 2);
-            } else {
+            else
                 procesado = invertirCadaNBits(bloque, len, 3);
-            }
         }
 
-        // Copiar resultado procesado en la salida final
-        for (int k = 0; procesado[k] != '\0'; k++) {
-            codificado[pos++] = procesado[k];
-        }
+        // Copiar bloque procesado al resultado final
+        copiar(codificado + pos, procesado, len);
+        pos += len;
 
-        // Liberar bloque temporal y anterior
         delete[] bloque;
         if (anterior) delete[] anterior;
-
-        // Guardar el bloque procesado como "anterior" para la siguiente iteración
         anterior = procesado;
     }
 
-    // Terminar cadena final con '\0'
     codificado[pos] = '\0';
-
-    // Liberar el último "anterior"
     if (anterior) delete[] anterior;
 
     return codificado;
 }
 
-/**
- * @brief Desencripta una cadena binaria usando el mismo esquema de bloques y semilla.
- *
- * El proceso divide la cadena en bloques de tamaño `semilla` y aplica reglas inversas:
- * - Primer bloque: se invierten todos los bits.
- * - Bloques siguientes:
- *   - Si el bloque anterior original tenía igual número de 1s y 0s → invertir todos los bits.
- *   - Si el bloque anterior original tenía más ceros que unos → invertir cada 2 bits.
- *   - Si el bloque anterior original tenía más unos que ceros → invertir cada 3 bits.
- *
- * @param binary Cadena binaria encriptada (unsigned char*).
- * @param size Número total de bits en la entrada.
- * @param semilla Tamaño de los bloques de procesamiento.
- * @return unsigned char* Cadena desencriptada (memoria dinámica).
- *
- * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
- */
+// Desencriptación simétrica (mismo proceso)
 unsigned char* desencriptarBits(const unsigned char* binary, int size, int semilla) {
-    unsigned char* decodificado = new unsigned char[size + 1];
-    int pos = 0;
+    return encriptarBits(binary, size, semilla);
+}
 
-    // "anterior" guarda el último bloque desencriptado
-    unsigned char* anterior = nullptr;
+// ===================== VERIFICACIÓN =====================
 
-    for (int i = 0; i < size; i += semilla) {
-        int len = (i + semilla <= size) ? semilla : (size - i);
+// Verifica si una cadena contiene solo '0' y '1'
+bool esBinario(const char* texto) {
+    for (int i = 0; texto[i] != '\0'; i++) {
+        if (texto[i] != '0' && texto[i] != '1') return false;
+    }
+    return true;
+}
 
-        // Copiar bloque encriptado actual
-        unsigned char* bloque = new unsigned char[len + 1];
-        for (int k = 0; k < len; k++) {
-            bloque[k] = binary[i + k];
-        }
-        bloque[len] = '\0';
+// ===================== FUNCIONES DE ALTO NIVEL =====================
 
-        unsigned char* procesado = nullptr;
+/**
+ * @brief Encripta un arreglo de líneas: texto → binario → encriptación
+ * @param datos Arreglo de cadenas a encriptar (se modifica in-place)
+ * @param numLineas Número de líneas en el arreglo
+ * @param semilla Semilla para el algoritmo de encriptación
+ */
+void encriptarArchivo(char** datos, int numLineas, int semilla) {
+    for (int i = 0; i < numLineas; i++) {
+        unsigned char* texto = reinterpret_cast<unsigned char*>(datos[i]);
+        int sizeTxt = longitud(texto);
 
-        if (i == 0) {
-            // Primer bloque → mismo que encriptación (invertir todo)
-            procesado = invertirBits(bloque, len);
-        } else {
-            // Contar 1s y 0s en el bloque anterior desencriptado
-            int unos = 0, ceros = 0;
-            for (int j = 0; anterior[j] != '\0'; j++) {
-                if (anterior[j] == '1') unos++;
-                else ceros++;
-            }
+        // 1. Convertir texto a binario
+        unsigned char* binario = textoAbinario(texto, sizeTxt);
+        int sizeBin = sizeTxt * 8;
 
-            // Aplicar la misma transformación que encriptación
-            if (unos == ceros) {
-                procesado = invertirBits(bloque, len);
-            } else if (ceros > unos) {
-                procesado = invertirCadaNBits(bloque, len, 2);
-            } else {
-                procesado = invertirCadaNBits(bloque, len, 3);
-            }
-        }
+        // 2. Encriptar el binario
+        unsigned char* encriptado = encriptarBits(binario, sizeBin, semilla);
 
-        // Copiar resultado en salida final
-        for (int k = 0; procesado[k] != '\0'; k++) {
-            decodificado[pos++] = procesado[k];
-        }
+        // 3. Reemplazar la línea original
+        delete[] datos[i];
+        datos[i] = reinterpret_cast<char*>(encriptado);
 
-        // Liberar memoria temporal
-        delete[] bloque;
-        if (anterior) delete[] anterior;
+        delete[] binario;
+    }
+}
 
-        // Guardar bloque original recién recuperado
-        anterior = procesado;
+/**
+ * @brief Desencripta un arreglo de líneas: desencriptación → binario → texto
+ * @param datos Arreglo de cadenas encriptadas (se modifica in-place)
+ * @param numLineas Número de líneas en el arreglo
+ * @param semilla Semilla usada en la encriptación
+ */
+void desencriptarArchivo(char** datos, int numLineas, int semilla) {
+    for (int i = 0; i < numLineas; i++) {
+        unsigned char* encriptado = reinterpret_cast<unsigned char*>(datos[i]);
+        int sizeEnc = longitud(encriptado);
+
+        // 1. Desencriptar
+        unsigned char* binario = desencriptarBits(encriptado, sizeEnc, semilla);
+
+        // 2. Convertir binario a texto ASCII
+        unsigned char* textoASCII = binarioAtexto(binario, sizeEnc);
+
+        // 3. Reemplazar la línea original
+        delete[] datos[i];
+        datos[i] = reinterpret_cast<char*>(textoASCII);
+
+        delete[] binario;
+    }
+}
+
+/**
+ * @brief Verifica si los archivos están encriptados
+ * @return true si ambos están encriptados, false si están en texto plano
+ */
+bool verificarEstadoEncriptacion(char** usuarios, char** admins) {
+    if (!admins || !usuarios || !admins[0] || !usuarios[0]) {
+        cerr << "Error: punteros nulos en verificación.\n";
+        return false;
     }
 
-    decodificado[pos] = '\0';
+    bool adminsEnc = esBinario(admins[0]);
+    bool usuariosEnc = esBinario(usuarios[0]);
 
-    if (anterior) delete[] anterior;
-
-    return decodificado;
+    if (adminsEnc && usuariosEnc) {
+        return true; // Ambos encriptados
+    } else if (!adminsEnc && !usuariosEnc) {
+        return false; // Ambos en texto plano
+    } else {
+        cerr << "Advertencia: Estado inconsistente de encriptación.\n";
+        return false;
+    }
 }

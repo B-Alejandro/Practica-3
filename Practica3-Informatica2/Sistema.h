@@ -1,94 +1,72 @@
-
 #ifndef SISTEMA_H
 #define SISTEMA_H
 
-    /**
- * @brief Invierte cada bloque de n bits dentro de un bloque dado.
- *
- * Recorre el arreglo de bits y aplica inversión sobre cada grupo de n posiciones.
- * Si el tamaño no es múltiplo de n, el último grupo puede ser más pequeño.
- *
- * @param block Puntero al bloque de bits (caracteres '0' y '1').
- * @param size Tamaño del bloque en caracteres.
- * @param n Cantidad de bits por grupo a invertir.
- * @return Nuevo puntero a bloque con los bits invertidos. Debe liberarse con delete[].
- */
-    unsigned char* invertirCadaNBits(const unsigned char* block, int size, int n);
+// ======================================================
+//  Archivo: Sistema.h
+//  Descripción: Declaraciones de funciones para la
+//  gestión de archivos del sistema de cajero.
+// ======================================================
+
+// ==================== GESTIÓN DE ARCHIVOS ====================
 
 /**
- * @brief Invierte todos los bits de un bloque.
+ * @brief Lee un archivo y devuelve sus líneas como un arreglo dinámico de cadenas.
  *
- * Cambia cada '0' por '1' y cada '1' por '0'.
+ * Cada línea se guarda como un `char*` en un arreglo de punteros (`char**`).
+ * Incluye validación de tamaño para evitar cargar archivos corruptos.
  *
- * @param block Puntero al bloque de bits (caracteres '0' y '1').
- * @param size Tamaño del bloque en caracteres.
- * @return Nuevo puntero a bloque con los bits invertidos. Debe liberarse con delete[].
+ * @param rutaArchivo Ruta del archivo a leer (cadena tipo C).
+ * @param numLineas Referencia donde se almacenará el número de líneas leídas.
+ * @return char** Arreglo dinámico de líneas, o nullptr si ocurre un error.
+ *
+ * @note El usuario debe liberar la memoria de cada línea y del arreglo con delete[].
  */
-unsigned char* invertirBits(const unsigned char* block, int size);
+char** leerArchivoLineas(const char* rutaArchivo, int& numLineas);
 
 /**
- * @brief Encripta una cadena binaria usando una semilla.
+ * @brief Guarda un arreglo de líneas en un archivo.
  *
- * Divide el binario en bloques de tamaño igual a la semilla y aplica reglas:
- *  - Primer bloque: se invierte.
- *  - Bloques siguientes: se decide el método según cantidad de 0s y 1s en el bloque anterior.
+ * Escribe todas las líneas del arreglo en el archivo especificado,
+ * sobrescribiendo su contenido anterior.
  *
- * @param binary Puntero al arreglo de bits de entrada.
- * @param size Tamaño de la secuencia binaria en caracteres.
- * @param semilla Tamaño de los bloques a procesar.
- * @return Nuevo puntero a bloque encriptado. Debe liberarse con delete[].
+ * @param rutaArchivo Ruta del archivo donde guardar.
+ * @param lineas Arreglo de cadenas a guardar.
+ * @param numLineas Número de líneas en el arreglo.
  */
-unsigned char* encriptarBits(const unsigned char* binary, int size, int semilla);
+void guardarArchivoLineas(const char* rutaArchivo, char** lineas, int numLineas);
 
 /**
- * @brief Crea un archivo de texto y escribe contenido en él.
+ * @brief Guarda el arreglo de usuarios en un archivo de texto plano.
  *
- * @param rutaArchivo Ruta al archivo a crear.
- * @param texto Puntero al contenido que se escribirá.
- * @param size Número de caracteres a escribir.
- * @return true si se pudo crear/escribir, false en caso de error.
+ * IMPORTANTE: Este archivo NO debe estar encriptado.
+ * Se guarda en formato: cedula,clave,nombre,saldo COP
+ *
+ * @param usuarios Arreglo de cadenas de usuarios.
+ * @param numUsuarios Número de usuarios en el arreglo.
+ * @param ruta Ruta del archivo donde guardar.
+ *
+ * @deprecated Use guardarArchivoLineas() en su lugar para mayor flexibilidad.
  */
 void guardarUsuariosEnArchivo(char** usuarios, int numUsuarios, const char* ruta);
 
 /**
- * @brief Lee el contenido de un archivo como arreglo de caracteres.
+ * @brief Muestra en consola el contenido de un arreglo de bytes.
  *
- * @param rutaArchivo Ruta del archivo a leer.
- * @param size Referencia donde se guarda el tamaño leído.
- * @return Puntero al contenido del archivo. Debe liberarse con delete[].
- */
-unsigned char* leerArchivoACharArray(const char* rutaArchivo, int& size);
-
-/**
- * @brief Muestra el contenido de un arreglo de caracteres en consola.
+ * Recorre un arreglo de bytes y muestra los caracteres directamente.
  *
- * @param contenido Puntero al arreglo de caracteres.
- * @param size Tamaño del arreglo.
+ * @param contenido Puntero al arreglo de bytes.
+ * @param size Número de bytes en el arreglo.
  */
 void mostrarContenido(unsigned char* contenido, int size);
 
 /**
- * @brief Convierte una cadena binaria a texto ASCII.
+ * @brief Muestra en consola el contenido de un arreglo de líneas.
  *
- * Toma grupos de 8 bits y los transforma a caracteres.
+ * Útil para depuración: muestra cada línea numerada del arreglo.
  *
- * @param texto Puntero a la cadena de bits (caracteres '0' y '1').
- * @param size Tamaño de la cadena binaria en caracteres.
- * @return Nuevo puntero al texto ASCII. Debe liberarse con delete[].
+ * @param lineas Arreglo de cadenas (char**).
+ * @param numLineas Número de líneas en el arreglo.
  */
-unsigned char* binarioAtexto(unsigned char* texto, int size);
+void mostrarLineas(char** lineas, int numLineas);
 
-/**
- * @brief Convierte texto ASCII a representación binaria.
- *
- * Toma cada carácter del texto y lo representa con 8 bits.
- *
- * @param text Puntero al texto en ASCII.
- * @param size Tamaño del texto en caracteres.
- * @return Nuevo puntero con representación binaria (0s y 1s). Debe liberarse con delete[].
- */
-unsigned char* textoAbinario(unsigned char* text, int size);
-
-char** leerArchivoLineas(const char* rutaArchivo, int& numLineas) ;
 #endif // SISTEMA_H
-

@@ -1,6 +1,6 @@
 #include <iostream>
 #include "menu.h"
-#include "sistema.h"
+#include "Sistema.h"
 using namespace std;
 
 // ---- Funciones auxiliares ----
@@ -143,7 +143,7 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     numUsuarios++;
 
     // Guardar cambios en archivo
-    guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
+    guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.bin");
     cout << "\nUsuario agregado correctamente.\n";
 }
 
@@ -190,7 +190,7 @@ void menuUsuario(char** usuarios, int numUsuarios) {
                     case 1:
                         // Consultar saldo
                         if (consultarSaldoUsuario(usuarios, numUsuarios, cedula)) {
-                            guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
+                            guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.bin");
                         }
                         break;
 
@@ -205,7 +205,7 @@ void menuUsuario(char** usuarios, int numUsuarios) {
                                 cout << "\n El monto debe ser mayor a cero.\n";
                             } else {
                                 if (modificarDineroUsuario(usuarios, numUsuarios, cedula, monto)) {
-                                    guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.txt");
+                                    guardarUsuariosEnArchivo(usuarios, numUsuarios, "../../Datos/usuarios.bin");
                                 }
                             }
                         }
@@ -236,13 +236,13 @@ void menuUsuario(char** usuarios, int numUsuarios) {
 void menuPrincipal(char**& usuarios, int& numUsuarios, char** admins, int numAdmins) {
     int opcion;
     do {
-        cout << "\n#################################\n";
-        cout << "#       SISTEMA BANCARIO        #\n";
-        cout << "#################################\n";
-        cout << "# 1. Administrador              #\n";
-        cout << "# 2. Usuario                    #\n";
-        cout << "# 3. Salir                      #\n";
-        cout << "#################################\n";
+        cout << "\n===================================\n";
+        cout << "||       SISTEMA BANCARIO        ||\n";
+        cout << "===================================\n";
+        cout << "|| 1. Administrador              ||\n";
+        cout << "|| 2. Usuario                    ||\n";
+        cout << "|| 3. Salir                      ||\n";
+        cout << "===================================\n";
         cout << "Seleccione una opción: ";
         cin >> opcion;
 
