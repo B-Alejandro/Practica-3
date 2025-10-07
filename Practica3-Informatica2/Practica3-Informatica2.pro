@@ -4,7 +4,6 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-        BinarioChar.cpp \
         Encriptacion.cpp \
         ManipulacionDeArchivos.cpp \
     Menu.cpp \
@@ -14,7 +13,6 @@ SOURCES += \
     validaciones.cpp
 
 HEADERS += \
-    BinarioChar.h \
     Encriptacion.h \
     Encriptacion.h \
     ManipulacionDeArchivos.h \

@@ -3,32 +3,19 @@
 #include "Validaciones.h"  // <-- Importante: para usar las funciones de validación
 using namespace std;
 
-// ---- Funciones auxiliares ----
-void extraerCedulaYClave(const char* linea, char* cedula, int maxCedula, char* clave, int maxClave) {
-    int i = 0, j = 0;
-
-    // Saltar espacios iniciales
-    while (linea[i] != '\0' && (linea[i] == ' ' || linea[i] == '\t')) i++;
-
-    // Copiar cédula hasta coma o CR/LF
-    j = 0;
-    while (linea[i] != '\0' && linea[i] != ',' && linea[i] != '\r' && linea[i] != '\n' && j < maxCedula - 1)
-        cedula[j++] = linea[i++];
-    cedula[j] = '\0';
-
-    if (linea[i] == ',') i++; // saltar coma
-
-    // Saltar espacios después de la coma
-    while (linea[i] != '\0' && (linea[i] == ' ' || linea[i] == '\t')) i++;
-
-    // Copiar clave hasta siguiente coma o CR/LF
-    j = 0;
-    while (linea[i] != '\0' && linea[i] != ',' && linea[i] != '\r' && linea[i] != '\n' && j < maxClave - 1)
-        clave[j++] = linea[i++];
-    clave[j] = '\0';
-}
-
-// ---- Menu administrador ----
+/**
+ * @brief Maneja el flujo del menú de administrador, incluyendo la autenticación y el registro de nuevos usuarios.
+ *
+ * Primero, solicita las credenciales del administrador y las valida contra el arreglo `admins`.
+ * Si la autenticación es exitosa, guía al usuario a través del proceso de registro de un
+ * nuevo usuario, solicitando y validando la cédula, la clave y el saldo inicial utilizando
+ * funciones de validación externas. Finalmente, añade el nuevo usuario al arreglo `usuarios`.
+ *
+ * @param usuarios Referencia al arreglo de punteros a cadenas de usuarios (puede ser redimensionado).
+ * @param numUsuarios Referencia al número actual de usuarios (se incrementa si se añade uno).
+ * @param admins Arreglo de punteros a cadenas que contienen las credenciales de los administradores.
+ * @param numAdmins El número total de administradores.
+ */
 void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int numAdmins) {
     char cedulaAdmin[50], claveIngresada[50];
     cout << "\n=================================\n";
@@ -40,6 +27,7 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     bool valido = false;
     for (int i = 0; i < numAdmins; i++) {
         char cedulaArchivo[50], claveArchivo[50];
+        // Se asume la existencia de esta función auxiliar
         extraerCedulaYClave(admins[i], cedulaArchivo, sizeof(cedulaArchivo), claveArchivo, sizeof(claveArchivo));
 
         if (cadenasIguales(cedulaArchivo, cedulaAdmin)) {
@@ -60,10 +48,10 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
 
     // Registro de usuario
     char cedula[50], clave[50], nombre[100], saldoStr[50];
-    int saldoInicial;
+    int saldoInicial=0;
 
     cout << "\n=================================\n";
-    cout << "   REGISTRAR NUEVO USUARIO\n";
+    cout << "    REGISTRAR NUEVO USUARIO\n";
     cout << "=================================\n";
 
     // ===== Validar CÉDULA =====
@@ -111,6 +99,7 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
         }
     } while (!validarSaldo(saldoStr));
 
+    // Nota: atoi es una función estándar, no es necesario documentarla aquí.
     saldoInicial = atoi(saldoStr);
 
     // Crear linea: "cedula,clave,nombre,saldo COP"
@@ -125,7 +114,7 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     concatenar(nuevoUsuario, saldoStr);
     concatenar(nuevoUsuario, " COP");
 
-    // Crear nuevo arreglo mas grande
+    // Crear nuevo arreglo mas grande y reasignar (Añadir usuario)
     char** nuevosUsuarios = new char*[numUsuarios + 1];
     for (int i = 0; i < numUsuarios; i++) {
         nuevosUsuarios[i] = usuarios[i];
@@ -139,7 +128,16 @@ void menuAdministrador(char**& usuarios, int& numUsuarios, char** admins, int nu
     cout << "\n Usuario agregado correctamente (en memoria).\n";
 }
 
-// ---- Menu usuario ----
+/**
+ * @brief Maneja el flujo del menú de usuario para operaciones bancarias.
+ *
+ * Solicita las credenciales del usuario y las verifica. Si la autenticación es exitosa,
+ * muestra un submenú para realizar operaciones como consultar saldo o retirar dinero.
+ * Las operaciones invocan a funciones externas (`consultarSaldoUsuario`, `modificarDineroUsuario`).
+ *
+ * @param usuarios Arreglo de punteros a cadenas que contienen la información de los usuarios.
+ * @param numUsuarios El número total de usuarios.
+ */
 void menuUsuario(char** usuarios, int numUsuarios) {
     char cedula[50], claveIngresada[50];
 
@@ -165,7 +163,7 @@ void menuUsuario(char** usuarios, int numUsuarios) {
                 while (continuar) {
                     int opcion;
                     cout << "\n=================================\n";
-                    cout << "   OPERACIONES DISPONIBLES\n";
+                    cout << "    OPERACIONES DISPONIBLES\n";
                     cout << "=================================\n";
                     cout << "1. Consultar saldo (Costo: 1000 COP)\n";
                     cout << "2. Retirar dinero (Costo: 1000 COP + monto)\n";
@@ -176,6 +174,7 @@ void menuUsuario(char** usuarios, int numUsuarios) {
 
                     switch (opcion) {
                     case 1:
+                        // Se asume la existencia de esta función
                         consultarSaldoUsuario(usuarios, numUsuarios, cedula);
                         break;
 
@@ -187,6 +186,7 @@ void menuUsuario(char** usuarios, int numUsuarios) {
                         if (monto <= 0) {
                             cout << "\n El monto debe ser mayor a cero.\n";
                         } else {
+                            // Se asume la existencia de esta función
                             modificarDineroUsuario(usuarios, numUsuarios, cedula, monto);
                         }
                         break;
@@ -213,21 +213,30 @@ void menuUsuario(char** usuarios, int numUsuarios) {
     }
 }
 
-// ---- Menu principal ----
+/**
+ * @brief Muestra el menú principal del sistema bancario y gestiona la navegación.
+ *
+ * Permite al usuario elegir entre acceder como Administrador, como Usuario, o Salir.
+ * Llama a las funciones `menuAdministrador` o `menuUsuario` según la opción seleccionada.
+ *
+ * @param usuarios Referencia al arreglo de punteros a cadenas de usuarios.
+ * @param numUsuarios Referencia al número actual de usuarios.
+ * @param admins Arreglo de punteros a cadenas que contienen las credenciales de los administradores.
+ * @param numAdmins El número total de administradores.
+ */
 void menuPrincipal(char**& usuarios, int& numUsuarios, char** admins, int numAdmins) {
     int opcion;
     do {
         cout << "\n===================================\n";
-        cout << "||       SISTEMA BANCARIO        ||\n";
+        cout << "||      SISTEMA BANCARIO         ||\n";
         cout << "===================================\n";
         cout << "|| 1. Administrador              ||\n";
         cout << "|| 2. Usuario                    ||\n";
         cout << "|| 3. Salir                      ||\n";
         cout << "===================================\n";
         cout << "Seleccione una opcion: ";
-        cin >> opcion;
-
-        if (cin.fail()) {
+        // Manejo básico de error de entrada no numérica
+        if (!(cin >> opcion)) {
             cin.clear();
             cin.ignore(10000, '\n');
             cout << "\n Entrada invalida. Ingrese un numero.\n";

@@ -26,4 +26,19 @@ bool consultarSaldoUsuario(char** lineas, int numUsuarios, const char* cedulaBus
  */
 bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBuscada, int montoRetiro);
 
+/**
+ * @brief Extrae la cédula y la clave de una línea de texto con formato delimitado.
+ *
+ * Esta función asume que la cédula es el primer campo y la clave el segundo,
+ * y ambos están separados por una coma. Ignora espacios y tabuladores
+ * al inicio y alrededor de la coma.
+ *
+ * @param linea La línea de texto de donde se extraerán los datos.
+ * @param cedula Puntero al buffer donde se almacenará la cédula extraída (salida).
+ * @param maxCedula El tamaño máximo del buffer para la cédula.
+ * @param clave Puntero al buffer donde se almacenará la clave extraída (salida).
+ * @param maxClave El tamaño máximo del buffer para la clave.
+ */
+void extraerCedulaYClave(const char* linea, char* cedula, int maxCedula, char* clave, int maxClave);
+
 #endif // OPERACIONES_USUARIO_H
