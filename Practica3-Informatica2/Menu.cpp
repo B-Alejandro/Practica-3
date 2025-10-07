@@ -1,5 +1,7 @@
 #include <iostream>
 #include "menu.h"
+#include "UtilidadesCadena.h"
+#include "OperacionesUsuario.h"
 #include "Validaciones.h"  // <-- Importante: para usar las funciones de validación
 using namespace std;
 

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdexcept> // Para std::invalid_argument, std::out_of_range, etc.
-#include "validaciones.h"
+#include "Validaciones.h"
 using namespace std;
 
 // ================================
