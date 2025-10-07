@@ -15,32 +15,23 @@
  *
  * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
  */
-    unsigned char* binarioAtexto(unsigned char* texto, int size) {
-    // Calcular número de caracteres a reconstruir
-    int nChars = size / 8;
+unsigned char* binarioAtexto(const unsigned char* binario, int len) {
+    // Asegurarse de usar múltiplo de 8
+    int bitsValidos = (len / 8) * 8;
+    if (bitsValidos == 0) return nullptr;
 
-    // Reservar memoria para la salida (+1 para terminador '\0')
-    unsigned char* resultado = new unsigned char[nChars + 1];
+    int numChars = bitsValidos / 8;
+    unsigned char* texto = new unsigned char[numChars + 1];
 
-    // Procesar cada bloque de 8 bits
-    for (int i = 0; i < nChars; i++) {
-        unsigned char c = 0; // acumulador del carácter reconstruido
-
-        // Leer 8 bits y reconstruir el byte
+    for (int i = 0; i < numChars; i++) {
+        unsigned char c = 0;
         for (int j = 0; j < 8; j++) {
-            if (texto[i * 8 + j] == '1') {
-                // Colocar el bit en la posición correspondiente
-                c |= (1 << (7 - j));
-            }
+            c = (c << 1) | (binario[i * 8 + j] - '0');
         }
-
-        // Guardar carácter reconstruido en el resultado
-        resultado[i] = c;
+        texto[i] = c;
     }
-
-    // Terminar con '\0' para que pueda tratarse como string C
-    resultado[nChars] = '\0';
-    return resultado;
+    texto[numChars] = '\0';
+    return texto;
 }
 
 /**

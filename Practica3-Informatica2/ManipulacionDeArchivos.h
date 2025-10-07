@@ -1,13 +1,11 @@
-#ifndef SISTEMA_H
-#define SISTEMA_H
+#ifndef ARCHIVOS_H
+#define ARCHIVOS_H
 
-// ======================================================
-//  Archivo: Sistema.h
-//  Descripción: Declaraciones de funciones para la
-//  gestión de archivos del sistema de cajero.
-// ======================================================
-
-// ==================== GESTIÓN DE ARCHIVOS ====================
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <algorithm>
+using namespace std;
 
 /**
  * @brief Lee un archivo y devuelve sus líneas como un arreglo dinámico de cadenas.
@@ -18,8 +16,6 @@
  * @param rutaArchivo Ruta del archivo a leer (cadena tipo C).
  * @param numLineas Referencia donde se almacenará el número de líneas leídas.
  * @return char** Arreglo dinámico de líneas, o nullptr si ocurre un error.
- *
- * @note El usuario debe liberar la memoria de cada línea y del arreglo con delete[].
  */
 char** leerArchivoLineas(const char* rutaArchivo, int& numLineas);
 
@@ -41,11 +37,7 @@ void guardarArchivoLineas(const char* rutaArchivo, char** lineas, int numLineas)
  * IMPORTANTE: Este archivo NO debe estar encriptado.
  * Se guarda en formato: cedula,clave,nombre,saldo COP
  *
- * @param usuarios Arreglo de cadenas de usuarios.
- * @param numUsuarios Número de usuarios en el arreglo.
- * @param ruta Ruta del archivo donde guardar.
- *
- * @deprecated Use guardarArchivoLineas() en su lugar para mayor flexibilidad.
+ * @deprecated Use guardarArchivoLineas() en su lugar.
  */
 void guardarUsuariosEnArchivo(char** usuarios, int numUsuarios, const char* ruta);
 
@@ -62,11 +54,11 @@ void mostrarContenido(unsigned char* contenido, int size);
 /**
  * @brief Muestra en consola el contenido de un arreglo de líneas.
  *
- * Útil para depuración: muestra cada línea numerada del arreglo.
+ * Útil para depuración: muestra cada línea numerada.
  *
  * @param lineas Arreglo de cadenas (char**).
  * @param numLineas Número de líneas en el arreglo.
  */
 void mostrarLineas(char** lineas, int numLineas);
 
-#endif // SISTEMA_H
+#endif // ARCHIVOS_H
