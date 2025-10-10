@@ -1,123 +1,112 @@
 #include "UtilidadesCadena.h"
 #include <iostream>
-#include <stdexcept>
 using namespace std;
 
-// ------------------------------------------
-// Funciones auxiliares
-// ------------------------------------------
+// ==================================================
+// FUNCIÓN AUXILIAR: Extraer cédula y clave de una línea
+// ==================================================
 
 /**
- * @brief Extrae la cédula y la clave de una línea de texto con formato delimitado.
+ * @brief Extrae los campos de cédula y clave de una línea de texto separada por comas.
  *
- * Esta función asume que la cédula es el primer campo y la clave el segundo,
- * y ambos están separados por una coma. Ignora espacios y tabuladores
- * al inicio y alrededor de la coma.
+ * La línea debe tener el formato:
+ * ```
+ * cedula,clave
+ * ```
  *
- * @param linea La línea de texto de donde se extraerán los datos.
- * @param cedula Puntero al buffer donde se almacenará la cédula extraída (salida).
- * @param maxCedula El tamaño máximo del buffer para la cédula.
- * @param clave Puntero al buffer donde se almacenará la clave extraída (salida).
- * @param maxClave El tamaño máximo del buffer para la clave.
+ * @param linea Cadena original que contiene los datos.
+ * @param cedula Buffer donde se almacenará la cédula extraída.
+ * @param maxCedula Tamaño máximo del buffer `cedula`.
+ * @param clave Buffer donde se almacenará la clave extraída.
+ * @param maxClave Tamaño máximo del buffer `clave`.
  */
 void extraerCedulaYClave(const char* linea, char* cedula, int maxCedula, char* clave, int maxClave) {
     int i = 0, j = 0;
 
-    // Saltar espacios iniciales
-    while (linea[i] != '\0' && (linea[i] == ' ' || linea[i] == '\t')) i++;
-
-    // Copiar cédula hasta coma o CR/LF
-    j = 0;
+    // Extraer cédula hasta la coma o fin de línea
     while (linea[i] != '\0' && linea[i] != ',' && linea[i] != '\r' && linea[i] != '\n' && j < maxCedula - 1)
         cedula[j++] = linea[i++];
     cedula[j] = '\0';
 
-    if (linea[i] == ',') i++; // saltar coma
+    if (linea[i] == ',') i++;
 
-    // Saltar espacios después de la coma
+    // Saltar espacios o tabulaciones
     while (linea[i] != '\0' && (linea[i] == ' ' || linea[i] == '\t')) i++;
 
-    // Copiar clave hasta siguiente coma o CR/LF
+    // Extraer clave
     j = 0;
     while (linea[i] != '\0' && linea[i] != ',' && linea[i] != '\r' && linea[i] != '\n' && j < maxClave - 1)
         clave[j++] = linea[i++];
     clave[j] = '\0';
 }
 
-// ==========================================
+// ==================================================
 // CONSULTAR SALDO DE USUARIO
-// ==========================================
+// ==================================================
 
 /**
- * @brief Consulta el saldo de un usuario específico, lo muestra por consola y lo actualiza descontando el costo de la consulta.
+ * @brief Busca una cédula en la lista de usuarios y muestra su saldo.
  *
- * Itera sobre las líneas de usuarios, busca la cédula, extrae el saldo, lo muestra,
- * aplica el costo de la consulta (1000 COP) y actualiza la línea del usuario con
- * el nuevo saldo. Si el saldo es insuficiente, no se cobra la consulta.
+ * Si el usuario existe, cobra un costo fijo de consulta de 1000 COP y
+ * actualiza el saldo en memoria. Si no existe, muestra un mensaje de error.
  *
- * @param lineas Un arreglo de punteros a cadenas de caracteres, donde cada cadena
- * representa la información de un usuario (Cédula, Clave, Nombre, Dinero).
- * @param numUsuarios El número total de usuarios en el arreglo `lineas`.
- * @param cedulaBuscada La cédula del usuario cuyo saldo se desea consultar.
- * @return `true` si se encuentra el usuario, se consulta el saldo y se actualiza la línea.
- * @return `false` si no se encuentra la cédula o si ocurre un error (datos inválidos, error al separar línea).
- * @exception std::invalid_argument Si `lineas` es nulo, `numUsuarios` es $\le 0$ o `cedulaBuscada` es nulo.
- * @exception std::runtime_error Si el campo dinero no se puede separar correctamente.
+ * @param lineas Arreglo de líneas con los datos de los usuarios.
+ * @param numUsuarios Número total de usuarios en el arreglo.
+ * @param cedulaBuscada Cédula del usuario a consultar.
+ * @return `true` si se encontró y actualizó el saldo correctamente.
+ * @return `false` si ocurrió un error o la cédula no existe.
+ *
+ * @throw const char* Si hay errores de punteros nulos o de separación de campos.
  */
 bool consultarSaldoUsuario(char** lineas, int numUsuarios, const char* cedulaBuscada) {
     const int COSTO_CONSULTA = 1000;
 
     try {
         if (!lineas || numUsuarios <= 0 || !cedulaBuscada)
-            throw invalid_argument("Datos de entrada invalidos en consultarSaldoUsuario.");
+            throw "Datos de entrada inválidos en consultarSaldoUsuario.";
 
         for (int i = 0; i < numUsuarios; i++) {
+            // Comparar cédula hasta la coma
             int j = 0;
-            // Compara la cédulaBuscada con el inicio de la línea (la cédula del usuario)
             while (cedulaBuscada[j] != '\0' && lineas[i][j] == cedulaBuscada[j]) j++;
-            // Verifica que la cédula sea idéntica y que lo que siga en la línea sea la coma delimitadora
             if (cedulaBuscada[j] != '\0' || lineas[i][j] != ',') continue;
 
+            // Separar los campos de la línea
             char* cedula; char* clave; char* nombre; char* dinero;
-            // Asume que separarLinea (definida en "utilidadesCadena.h") separa dinámicamente
-            // la línea y asigna punteros a los campos.
             separarLinea(lineas[i], cedula, clave, nombre, dinero);
 
-            if (!dinero) throw runtime_error("El campo dinero no se pudo separar correctamente.");
+            if (!dinero) throw "El campo dinero no se pudo separar correctamente.";
 
+            // Convertir dinero a entero
             int saldo = 0;
             int k = 0;
-            // Convierte la cadena de dinero a entero (asume que los primeros caracteres son dígitos)
             while (dinero[k] >= '0' && dinero[k] <= '9') {
                 saldo = saldo * 10 + (dinero[k] - '0');
                 k++;
             }
 
+            // Mostrar información
             cout << "\n=================================\n";
             cout << "  CONSULTA DE SALDO\n";
             cout << "=================================\n";
             cout << "Usuario: " << nombre << endl;
-            cout << "Cedula: " << cedula << endl;
+            cout << "Cédula: " << cedula << endl;
             cout << "Saldo actual: " << saldo << " COP" << endl;
             cout << "Costo de consulta: " << COSTO_CONSULTA << " COP" << endl;
 
             if (saldo < COSTO_CONSULTA) {
                 cout << "\nAdvertencia: Fondos insuficientes para cobrar la consulta.\n";
-                saldo = 0;
             } else {
                 saldo -= COSTO_CONSULTA;
             }
 
-            cout << "Saldo despues de consulta: " << saldo << " COP\n";
+            cout << "Saldo después de consulta: " << saldo << " COP\n";
             cout << "=================================\n\n";
 
-            // Actualizar linea con el nuevo saldo
-            delete[] lineas[i]; // Libera la línea antigua
-
-            // Convierte el nuevo saldo a cadena para la actualización
+            // Actualizar línea con nuevo saldo
+            delete[] lineas[i];
             char nuevoDinero[50];
-            int idx = 0;
-            int temp = saldo;
+            int idx = 0, temp = saldo;
             char rev[20];
             int rpos = 0;
             if (temp == 0) rev[rpos++] = '0';
@@ -126,9 +115,7 @@ bool consultarSaldoUsuario(char** lineas, int numUsuarios, const char* cedulaBus
             nuevoDinero[idx++] = ' '; nuevoDinero[idx++] = 'C'; nuevoDinero[idx++] = 'O'; nuevoDinero[idx++] = 'P';
             nuevoDinero[idx] = '\0';
 
-            // Vuelve a construir la línea completa con el nuevo saldo
-            // Se asume que longitud y concatenar están en "utilidadesCadena.h"
-            int newLen = longitud(cedula) + longitud(clave) + longitud(nombre) + longitud(nuevoDinero) + 4; // +4 por las 3 comas y el '\0'
+            int newLen = longitud(cedula) + longitud(clave) + longitud(nombre) + longitud(nuevoDinero) + 4;
             lineas[i] = new char[newLen];
             lineas[i][0] = '\0';
             concatenar(lineas[i], cedula);
@@ -139,39 +126,36 @@ bool consultarSaldoUsuario(char** lineas, int numUsuarios, const char* cedulaBus
             concatenar(lineas[i], ",");
             concatenar(lineas[i], nuevoDinero);
 
-            // Libera los campos separados dinámicamente por separarLinea (asumiendo que usa new[])
             delete[] cedula; delete[] clave; delete[] nombre; delete[] dinero;
             return true;
         }
 
-        cout << "Cedula incorrecta: no existe en el sistema.\n";
+        cout << "Cédula incorrecta: no existe en el sistema.\n";
         return false;
-    } catch (const exception& e) {
-        cerr << "Error en consultarSaldoUsuario: " << e.what() << endl;
+    }
+    catch (const char* mensaje) {
+        cerr << "Error en consultarSaldoUsuario: " << mensaje << endl;
         return false;
     }
 }
 
-// ==========================================
+// ==================================================
 // RETIRO DE DINERO
-// ==========================================
+// ==================================================
 
 /**
- * @brief Modifica el saldo de un usuario realizando un retiro, descontando el monto y el costo de la transacción.
+ * @brief Resta un monto del saldo del usuario, incluyendo el costo del retiro.
  *
- * Itera sobre las líneas de usuarios, busca la cédula, verifica que haya fondos
- * suficientes (monto de retiro + costo de retiro), realiza el descuento y actualiza
- * la línea del usuario con el nuevo saldo.
+ * Si el usuario no tiene fondos suficientes o no se encuentra, no se modifica el saldo.
  *
- * @param lineas Un arreglo de punteros a cadenas de caracteres, donde cada cadena
- * representa la información de un usuario (Cédula, Clave, Nombre, Dinero).
- * @param numUsuarios El número total de usuarios en el arreglo `lineas`.
- * @param cedulaBuscada La cédula del usuario al que se le modificará el saldo.
- * @param montoRetiro El monto de dinero que el usuario desea retirar.
- * @return `true` si se encuentra el usuario, hay fondos suficientes y se actualiza la línea.
- * @return `false` si no se encuentra la cédula, no hay fondos o si ocurre un error.
- * @exception std::invalid_argument Si `lineas` es nulo, `numUsuarios` es $\le 0$ o `cedulaBuscada` es nulo.
- * @exception std::runtime_error Si el campo dinero no se puede separar correctamente.
+ * @param lineas Arreglo de líneas con datos de usuarios.
+ * @param numUsuarios Número total de usuarios.
+ * @param cedulaBuscada Cédula del usuario.
+ * @param montoRetiro Monto solicitado para retirar.
+ * @return `true` si el retiro se realizó exitosamente.
+ * @return `false` si hubo un error o fondos insuficientes.
+ *
+ * @throw const char* Si hay datos de entrada inválidos o falla la separación de campos.
  */
 bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBuscada, int montoRetiro) {
     const int COSTO_RETIRO = 1000;
@@ -179,25 +163,19 @@ bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBu
 
     try {
         if (!lineas || numUsuarios <= 0 || !cedulaBuscada)
-            throw invalid_argument("Datos de entrada invalidos en modificarDineroUsuario.");
+            throw "Datos de entrada inválidos en modificarDineroUsuario.";
 
         for (int i = 0; i < numUsuarios; i++) {
             int j = 0;
-            // Compara la cédulaBuscada con el inicio de la línea (la cédula del usuario)
             while (cedulaBuscada[j] != '\0' && lineas[i][j] == cedulaBuscada[j]) j++;
-            // Verifica que la cédula sea idéntica y que lo que siga en la línea sea la coma delimitadora
             if (cedulaBuscada[j] != '\0' || lineas[i][j] != ',') continue;
 
             char* cedula; char* clave; char* nombre; char* dinero;
-            // Asume que separarLinea (definida en "utilidadesCadena.h") separa dinámicamente
-            // la línea y asigna punteros a los campos.
             separarLinea(lineas[i], cedula, clave, nombre, dinero);
-
-            if (!dinero) throw runtime_error("El campo dinero no se pudo separar correctamente.");
+            if (!dinero) throw "El campo dinero no se pudo separar correctamente.";
 
             int saldo = 0;
             int k = 0;
-            // Convierte la cadena de dinero a entero (asume que los primeros caracteres son dígitos)
             while (dinero[k] >= '0' && dinero[k] <= '9') {
                 saldo = saldo * 10 + (dinero[k] - '0');
                 k++;
@@ -209,11 +187,11 @@ bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBu
             cout << "Usuario: " << nombre << endl;
             cout << "Saldo actual: " << saldo << " COP" << endl;
             cout << "Monto a retirar: " << montoRetiro << " COP" << endl;
-            cout << "Costo de transaccion: " << COSTO_RETIRO << " COP" << endl;
+            cout << "Costo de transacción: " << COSTO_RETIRO << " COP" << endl;
             cout << "Total a descontar: " << montoTotal << " COP" << endl;
 
             if (saldo < montoTotal) {
-                cout << "\nTransaccion rechazada.\n";
+                cout << "\nTransacción rechazada.\n";
                 cout << "Fondos insuficientes para realizar el retiro.\n";
                 cout << "=================================\n\n";
                 delete[] cedula; delete[] clave; delete[] nombre; delete[] dinero;
@@ -222,16 +200,13 @@ bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBu
 
             saldo -= montoTotal;
             cout << "Nuevo saldo: " << saldo << " COP\n";
-            cout << "Transaccion exitosa.\n";
+            cout << "Transacción exitosa.\n";
             cout << "=================================\n\n";
 
-            // Actualizar linea con el nuevo saldo
-            delete[] lineas[i]; // Libera la línea antigua
-
-            // Convierte el nuevo saldo a cadena para la actualización
+            // Actualizar saldo
+            delete[] lineas[i];
             char nuevoDinero[50];
-            int idx = 0;
-            int temp = saldo;
+            int idx = 0, temp = saldo;
             char rev[20];
             int rpos = 0;
             if (temp == 0) rev[rpos++] = '0';
@@ -240,9 +215,7 @@ bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBu
             nuevoDinero[idx++] = ' '; nuevoDinero[idx++] = 'C'; nuevoDinero[idx++] = 'O'; nuevoDinero[idx++] = 'P';
             nuevoDinero[idx] = '\0';
 
-            // Vuelve a construir la línea completa con el nuevo saldo
-            // Se asume que longitud y concatenar están en "utilidadesCadena.h"
-            int newLen = longitud(cedula) + longitud(clave) + longitud(nombre) + longitud(nuevoDinero) + 4; // +4 por las 3 comas y el '\0'
+            int newLen = longitud(cedula) + longitud(clave) + longitud(nombre) + longitud(nuevoDinero) + 4;
             lineas[i] = new char[newLen];
             lineas[i][0] = '\0';
             concatenar(lineas[i], cedula);
@@ -253,15 +226,15 @@ bool modificarDineroUsuario(char** lineas, int numUsuarios, const char* cedulaBu
             concatenar(lineas[i], ",");
             concatenar(lineas[i], nuevoDinero);
 
-            // Libera los campos separados dinámicamente por separarLinea (asumiendo que usa new[])
             delete[] cedula; delete[] clave; delete[] nombre; delete[] dinero;
             return true;
         }
 
-        cout << "Cedula incorrecta: no existe en el sistema.\n";
+        cout << "Cédula incorrecta: no existe en el sistema.\n";
         return false;
-    } catch (const exception& e) {
-        cerr << "Error en modificarDineroUsuario: " << e.what() << endl;
+    }
+    catch (const char* mensaje) {
+        cerr << "Error en modificarDineroUsuario: " << mensaje << endl;
         return false;
     }
 }

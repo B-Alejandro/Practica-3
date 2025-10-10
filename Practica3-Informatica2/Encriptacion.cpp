@@ -4,189 +4,270 @@
 
 using namespace std;
 
+// ============================================================
+//  CONVERSIÓN BINARIO <-> TEXTO
+// ============================================================
+
 /**
- * @brief Convierte una cadena binaria a texto ASCII.
+ * @brief Convierte una cadena binaria ('0' y '1') a texto ASCII.
  *
- * Recorre un arreglo de caracteres binarios ('0' y '1') y los agrupa
- * en bloques de 8 bits para reconstruir cada carácter ASCII.
- *
- * Ejemplo:
- * - Entrada: "01100001" (8 bits)
- * - Salida: 'a'
- *
- * @param texto Cadena de bits (unsigned char*), debe tener longitud múltiplo de 8.
- * @param size Número total de bits en el arreglo (longitud de texto).
- * @return unsigned char* Texto ASCII resultante (memoria dinámica terminada en '\0').
- *
- * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
+ * @param binario Cadena binaria (unsigned char*).
+ * @param len Longitud total (múltiplo de 8 recomendado).
+ * @return Puntero a texto ASCII nuevo o nullptr si hay error.
+ * @note El usuario debe liberar la memoria con `delete[]`.
  */
 unsigned char* binarioAtexto(const unsigned char* binario, int len) {
-    // Asegurarse de usar múltiplo de 8
-    int bitsValidos = (len / 8) * 8;
-    if (bitsValidos == 0) return nullptr;
+    try {
+        if (binario == nullptr || len <= 0)
+            throw "Error: puntero nulo o longitud inválida en binarioAtexto.";
 
-    int numChars = bitsValidos / 8;
-    unsigned char* texto = new unsigned char[numChars + 1];
+        int bitsValidos = (len / 8) * 8;
+        if (bitsValidos == 0)
+            throw "Error: longitud no múltiplo de 8.";
 
-    for (int i = 0; i < numChars; i++) {
-        unsigned char c = 0;
-        for (int j = 0; j < 8; j++) {
-            c = (c << 1) | (binario[i * 8 + j] - '0');
+        int numChars = bitsValidos / 8;
+        unsigned char* texto = new unsigned char[numChars + 1];
+
+        for (int i = 0; i < numChars; i++) {
+            unsigned char c = 0;
+            for (int j = 0; j < 8; j++) {
+                if (binario[i * 8 + j] != '0' && binario[i * 8 + j] != '1')
+                    throw "Error: carácter no binario detectado.";
+                c = (c << 1) | (binario[i * 8 + j] - '0');
+            }
+            texto[i] = c;
         }
-        texto[i] = c;
+
+        texto[numChars] = '\0';
+        return texto;
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
+        return nullptr;
     }
-    texto[numChars] = '\0';
-    return texto;
 }
 
 /**
- * @brief Convierte un texto ASCII a su representación binaria (8 bits por carácter).
+ * @brief Convierte texto ASCII a su representación binaria.
  *
- * Toma cada carácter del texto y lo convierte en su equivalente binario
- * de 8 bits, concatenando todos los bits en una sola cadena.
- *
- * Ejemplo:
- * - Entrada: "a"
- * - Salida: "01100001"
- *
- * @param text Texto ASCII de entrada (unsigned char*).
- * @param size Número de caracteres en el texto.
- * @return unsigned char* Cadena binaria resultante (memoria dinámica terminada en '\0').
- *
- * @note El usuario debe liberar la memoria con `delete[]` después de usar el resultado.
+ * @param text Texto ASCII.
+ * @param size Número de caracteres.
+ * @return Cadena binaria nueva o nullptr si hay error.
  */
 unsigned char* textoAbinario(unsigned char* text, int size) {
-    // Reservar memoria para todos los bits (+1 para '\0')
-    unsigned char* resultado = new unsigned char[size * 8 + 1];
+    try {
+        if (text == nullptr || size <= 0)
+            throw "Error: texto nulo o tamaño inválido.";
 
-    // Procesar cada carácter del texto
-    for (int i = 0; i < size; i++) {
-        unsigned char c = text[i];
-
-        // Convertir cada bit del carácter
-        for (int j = 7; j >= 0; j--) {
-            // Extraer bit j y guardarlo como '0' o '1'
-            resultado[i * 8 + (7 - j)] = ((c >> j) & 1) ? '1' : '0';
+        unsigned char* resultado = new unsigned char[size * 8 + 1];
+        for (int i = 0; i < size; i++) {
+            unsigned char c = text[i];
+            for (int j = 7; j >= 0; j--)
+                resultado[i * 8 + (7 - j)] = ((c >> j) & 1) ? '1' : '0';
         }
-    }
 
-    // Terminar con '\0' para que sea string C válido
-    resultado[size * 8] = '\0';
-    return resultado;
+        resultado[size * 8] = '\0';
+        return resultado;
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
+        return nullptr;
+    }
 }
 
+// ============================================================
+//  INVERSIÓN DE BITS
+// ============================================================
 
-// ===================== INVERSIÓN DE BITS =====================
-
+/**
+ * @brief Invierte todos los bits ('0' ↔ '1') de un bloque.
+ */
 unsigned char* invertirBits(const unsigned char* bloque, int len) {
-    unsigned char* res = new unsigned char[len + 1];
-    for (int i = 0; i < len; i++) {
-        if (bloque[i] == '0') res[i] = '1';
-        else if (bloque[i] == '1') res[i] = '0';
-        else res[i] = bloque[i];
-    }
-    res[len] = '\0';
-    return res;
-}
+    try {
+        if (bloque == nullptr || len <= 0)
+            throw "Error: bloque nulo o longitud inválida en invertirBits.";
 
-unsigned char* invertirCadaNBits(unsigned char* bloque, int len, int n) {
-    unsigned char* res = new unsigned char[len + 1];
-    copiarN(reinterpret_cast<char*>(res), reinterpret_cast<const char*>(bloque), len);
-    res[len] = '\0';
-
-    for (int i = 0; i < len; i += n) {
-        for (int j = 0; j < n && i + j < len; j++) {
-            res[i + j] = (res[i + j] == '0') ? '1' : '0';
+        unsigned char* res = new unsigned char[len + 1];
+        for (int i = 0; i < len; i++) {
+            if (bloque[i] == '0') res[i] = '1';
+            else if (bloque[i] == '1') res[i] = '0';
+            else throw "Error: carácter no binario en invertirBits.";
         }
+        res[len] = '\0';
+        return res;
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
+        return nullptr;
     }
-
-    return res;
 }
 
-// ===================== ENCRIPTACIÓN =====================
+/**
+ * @brief Invierte los bits de un bloque en grupos de N bits.
+ */
+unsigned char* invertirCadaNBits(unsigned char* bloque, int len, int n) {
+    try {
+        if (bloque == nullptr || len <= 0 || n <= 0)
+            throw "Error: parámetros inválidos en invertirCadaNBits.";
+
+        unsigned char* res = new unsigned char[len + 1];
+        copiarN(reinterpret_cast<char*>(res), reinterpret_cast<const char*>(bloque), len);
+        res[len] = '\0';
+
+        for (int i = 0; i < len; i += n) {
+            for (int j = 0; j < n && i + j < len; j++) {
+                if (res[i + j] != '0' && res[i + j] != '1')
+                    throw "Error: carácter no binario detectado en invertirCadaNBits.";
+                res[i + j] = (res[i + j] == '0') ? '1' : '0';
+            }
+        }
+
+        return res;
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
+        return nullptr;
+    }
+}
+
+// ============================================================
+//  ENCRIPTACIÓN Y DESENCRIPTACIÓN
+// ============================================================
 
 unsigned char* encriptarBits(const unsigned char* binary, int size, int semilla) {
-    unsigned char* codificado = new unsigned char[size + 1];
-    int pos = 0;
-    unsigned char* anterior = nullptr;
+    try {
+        if (binary == nullptr || size <= 0 || semilla <= 0)
+            throw "Error: parámetros inválidos en encriptarBits.";
 
-    for (int i = 0; i < size; i += semilla) {
-        int len = (i + semilla <= size) ? semilla : (size - i);
-        unsigned char* bloque = new unsigned char[len + 1];
-        copiarN(reinterpret_cast<char*>(bloque), reinterpret_cast<const char*>(binary + i), len);
-        bloque[len] = '\0';
+        unsigned char* codificado = new unsigned char[size + 1];
+        int pos = 0;
+        unsigned char* anterior = nullptr;
 
-        unsigned char* procesado = nullptr;
-        if (i == 0)
-            procesado = invertirBits(bloque, len);
-        else {
-            int unos = 0, ceros = 0;
-            for (int j = 0; anterior[j] != '\0'; j++) {
-                if (anterior[j] == '1') unos++;
-                else if (anterior[j] == '0') ceros++;
+        for (int i = 0; i < size; i += semilla) {
+            int len = (i + semilla <= size) ? semilla : (size - i);
+            unsigned char* bloque = new unsigned char[len + 1];
+            copiarN(reinterpret_cast<char*>(bloque), reinterpret_cast<const char*>(binary + i), len);
+            bloque[len] = '\0';
+
+            unsigned char* procesado = nullptr;
+
+            if (i == 0) {
+                procesado = invertirBits(bloque, len);
+            } else {
+                int unos = 0, ceros = 0;
+                for (int j = 0; anterior[j] != '\0'; j++) {
+                    if (anterior[j] == '1') unos++;
+                    else if (anterior[j] == '0') ceros++;
+                }
+
+                if (unos == ceros)
+                    procesado = invertirBits(bloque, len);
+                else if (ceros > unos)
+                    procesado = invertirCadaNBits(bloque, len, 2);
+                else
+                    procesado = invertirCadaNBits(bloque, len, 3);
             }
 
-            if (unos == ceros)
-                procesado = invertirBits(bloque, len);
-            else if (ceros > unos)
-                procesado = invertirCadaNBits(bloque, len, 2);
-            else
-                procesado = invertirCadaNBits(bloque, len, 3);
+            copiarN(reinterpret_cast<char*>(codificado + pos),
+                    reinterpret_cast<const char*>(procesado), len);
+            pos += len;
+
+            delete[] bloque;
+            if (anterior) delete[] anterior;
+            anterior = procesado;
         }
 
-        copiarN(reinterpret_cast<char*>(codificado + pos), reinterpret_cast<const char*>(procesado), len);
-        pos += len;
-
-        delete[] bloque;
+        codificado[pos] = '\0';
         if (anterior) delete[] anterior;
-        anterior = procesado;
+        return codificado;
+
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
+        return nullptr;
     }
-
-    codificado[pos] = '\0';
-    if (anterior) delete[] anterior;
-
-    return codificado;
 }
 
+/**
+ * @brief Desencripta (idéntico al proceso de encriptar).
+ */
 unsigned char* desencriptarBits(const unsigned char* binary, int size, int semilla) {
     return encriptarBits(binary, size, semilla);
 }
 
+/**
+ * @brief Encripta un arreglo de cadenas de texto.
+ */
 void encriptarArchivo(char** datos, int numLineas, int semilla) {
-    for (int i = 0; i < numLineas; i++) {
-        unsigned char* texto = reinterpret_cast<unsigned char*>(datos[i]);
-        int sizeTxt = longitud(datos[i]);
-        unsigned char* binario = textoAbinario(texto, sizeTxt);
-        int sizeBin = sizeTxt * 8;
-        unsigned char* encriptado = encriptarBits(binario, sizeBin, semilla);
-        delete[] datos[i];
-        datos[i] = reinterpret_cast<char*>(encriptado);
-        delete[] binario;
+    try {
+        if (datos == nullptr || numLineas <= 0)
+            throw "Error: parámetros inválidos en encriptarArchivo.";
+
+        for (int i = 0; i < numLineas; i++) {
+            unsigned char* texto = reinterpret_cast<unsigned char*>(datos[i]);
+            int sizeTxt = longitud(datos[i]);
+            unsigned char* binario = textoAbinario(texto, sizeTxt);
+            if (!binario) continue;
+
+            int sizeBin = sizeTxt * 8;
+            unsigned char* encriptado = encriptarBits(binario, sizeBin, semilla);
+            if (!encriptado) {
+                delete[] binario;
+                continue;
+            }
+
+            delete[] datos[i];
+            datos[i] = reinterpret_cast<char*>(encriptado);
+            delete[] binario;
+        }
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
     }
 }
 
+/**
+ * @brief Desencripta un arreglo de cadenas de texto.
+ */
 void desencriptarArchivo(char** datos, int numLineas, int semilla) {
-    for (int i = 0; i < numLineas; i++) {
-        unsigned char* encriptado = reinterpret_cast<unsigned char*>(datos[i]);
-        int sizeEnc = longitud(datos[i]);
-        unsigned char* binario = desencriptarBits(encriptado, sizeEnc, semilla);
-        int bitsValidos = (sizeEnc / 8) * 8;
-        unsigned char* textoASCII = binarioAtexto(binario, bitsValidos);
-        delete[] datos[i];
-        datos[i] = reinterpret_cast<char*>(textoASCII);
-        delete[] binario;
+    try {
+        if (datos == nullptr || numLineas <= 0)
+            throw "Error: parámetros inválidos en desencriptarArchivo.";
+
+        for (int i = 0; i < numLineas; i++) {
+            unsigned char* encriptado = reinterpret_cast<unsigned char*>(datos[i]);
+            int sizeEnc = longitud(datos[i]);
+            unsigned char* binario = desencriptarBits(encriptado, sizeEnc, semilla);
+            if (!binario) continue;
+
+            int bitsValidos = (sizeEnc / 8) * 8;
+            unsigned char* textoASCII = binarioAtexto(binario, bitsValidos);
+            if (!textoASCII) {
+                delete[] binario;
+                continue;
+            }
+
+            delete[] datos[i];
+            datos[i] = reinterpret_cast<char*>(textoASCII);
+            delete[] binario;
+        }
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
     }
 }
 
+/**
+ * @brief Verifica si los archivos están encriptados o no.
+ */
 bool verificarEstadoEncriptacion(char** usuarios, char** admins) {
-    if (!admins || !usuarios || !admins[0] || !usuarios[0]) {
-        cerr << "Error: punteros nulos en verificación.\n";
+    try {
+        if (!admins || !usuarios || !admins[0] || !usuarios[0])
+            throw "Error: punteros nulos detectados en verificación.";
+
+        bool adminsEnc = esBinario(admins[0]);
+        bool usuariosEnc = esBinario(usuarios[0]);
+
+        if (adminsEnc && usuariosEnc) return true;
+        if (!adminsEnc && !usuariosEnc) return false;
+
+        cerr << "[Advertencia] Estado inconsistente de encriptación.\n";
+        return false;
+    } catch (const char* msg) {
+        cerr << "[Excepción] " << msg << endl;
         return false;
     }
-    bool adminsEnc = esBinario(admins[0]);
-    bool usuariosEnc = esBinario(usuarios[0]);
-    if (adminsEnc && usuariosEnc) return true;
-    if (!adminsEnc && !usuariosEnc) return false;
-    cerr << "Advertencia: Estado inconsistente de encriptación.\n";
-    return false;
 }

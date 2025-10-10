@@ -1,6 +1,15 @@
-# Sistema de Registro de Usuarios para Cajero Electrónico
+# Práctica 3 — Informática II  
 
-Este proyecto implementa un sistema de gestión de usuarios para un cajero electrónico con acceso de administrador y clientes.
+Sistema de Registro de Usuarios para Cajero Electrónico  
+![Estado](https://img.shields.io/badge/Estado-Finalizado-brightgreen)
+
+Este proyecto académico fue desarrollado como parte de la **Práctica 3 del curso Informática II**. Implementa un sistema de gestión de usuarios para un cajero electrónico con acceso diferenciado para administradores y clientes. El sistema fue desarrollado en dos versiones: una usando arreglos de caracteres (`char[]`) y otra usando clases `String`.
+
+El proyecto permite la administración, registro y operación de usuarios en un entorno simulado de cajero electrónico. Incluye validaciones, manejo de excepciones, encriptación y actualización automática de los datos almacenados en archivos.
+
+Los administradores acceden mediante el archivo `sudo.txt`, el cual contiene las credenciales encriptadas. Una vez autenticados, pueden registrar nuevos usuarios en el archivo `usuarios.txt`, con formato `cédula, clave, saldo (COP)`. Los clientes, por su parte, pueden iniciar sesión para consultar su saldo o realizar retiros, pagando un costo de 1000 COP por cada operación. Todas las modificaciones se reflejan directamente en el archivo de usuarios.
+
+Las transacciones se gestionan de manera segura, aplicando métodos de codificación vistos en clase. El sistema verifica el formato y contenido de los datos de entrada, garantizando integridad y consistencia de la información. Cada operación incluye manejo de errores y validaciones automáticas que previenen accesos o formatos inválidos.
 
 El sistema fue desarrollado en dos versiones: 
 

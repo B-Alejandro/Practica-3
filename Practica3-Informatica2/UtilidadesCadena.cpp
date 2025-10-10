@@ -1,152 +1,224 @@
-
 #include <iostream>
 using namespace std;
 
-// ===================== FUNCIONES BÁSICAS =====================
+// ============================================================
+//                 FUNCIONES BÁSICAS DE CADENAS
+// ============================================================
 
 /**
  * @brief Calcula la longitud de una cadena de caracteres.
  *
- * La longitud se determina contando el número de caracteres hasta
- * encontrar el terminador nulo ('\0').
+ * Recorre la cadena hasta encontrar el terminador nulo '\0'.
  *
- * @param cadena La cadena de caracteres de entrada.
- * @return El número de caracteres en la cadena (excluyendo el '\0').
+ * @param cadena Puntero a la cadena de caracteres.
+ * @return int Longitud de la cadena (sin contar el '\0').
+ *
+ * @throw const char* Si el puntero es nulo.
+ *
+ * @note Si ocurre un error, se imprime un mensaje y se devuelve 0.
  */
 int longitud(const char* cadena) {
-    int i = 0;
-    while (cadena[i] != '\0') i++;
-    return i;
+    try {
+        if (cadena == nullptr)
+            throw "Cadena nula en longitud().";
+
+        int i = 0;
+        while (cadena[i] != '\0') i++;
+        return i;
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
+        return 0;
+    }
 }
 
 /**
- * @brief Copia el contenido de una cadena de origen a una cadena de destino.
+ * @brief Copia el contenido de una cadena de origen a una cadena destino.
  *
- * Se asume que el buffer de destino tiene suficiente espacio para alojar
- * la cadena de origen, incluido el terminador nulo.
+ * @param destino Puntero al buffer donde se copiará el texto (salida).
+ * @param origen Puntero a la cadena de origen (entrada).
  *
- * @param destino Puntero al buffer donde se copiará la cadena (salida).
- * @param origen Puntero a la cadena de caracteres a copiar (entrada).
+ * @throw const char* Si alguno de los punteros es nulo.
+ *
+ * @note Asegúrate de que el destino tenga suficiente espacio.
  */
 void copiar(char* destino, const char* origen) {
-    int i = 0;
-    while (origen[i] != '\0') {
-        destino[i] = origen[i];
-        i++;
+    try {
+        if (!destino || !origen)
+            throw "Puntero nulo en copiar().";
+
+        int i = 0;
+        while (origen[i] != '\0') {
+            destino[i] = origen[i];
+            i++;
+        }
+        destino[i] = '\0';
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
     }
-    destino[i] = '\0';
 }
 
 /**
- * @brief Copia un número específico de caracteres de una cadena de origen a una de destino.
+ * @brief Copia un número específico de caracteres sin añadir terminador nulo.
  *
- * Esta función *no* agrega un terminador nulo ('\0') al destino,
- * por lo que el resultado puede no ser una cadena de C válida a menos que
- * `destino[len]` sea terminada manualmente.
+ * @param destino Puntero al buffer destino (salida).
+ * @param origen Puntero a la cadena de origen (entrada).
+ * @param len Número de caracteres a copiar.
  *
- * @param destino Puntero al buffer donde se copiarán los caracteres (salida).
- * @param origen Puntero a la cadena de caracteres de origen (entrada).
- * @param len El número de caracteres a copiar.
+ * @throw const char* Si alguno de los punteros es nulo o si la longitud es negativa.
  */
 void copiarN(char* destino, const char* origen, int len) {
-    for (int i = 0; i < len; i++) destino[i] = origen[i];
+    try {
+        if (!destino || !origen)
+            throw "Puntero nulo en copiarN().";
+        if (len < 0)
+            throw "Longitud negativa en copiarN().";
+
+        for (int i = 0; i < len; i++)
+            destino[i] = origen[i];
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
+    }
 }
 
-// ===================== MANEJO DE TEXTO =====================
+// ============================================================
+//                     MANEJO DE TEXTO
+// ============================================================
 
 /**
- * @brief Concatena una cadena de origen al final de una cadena de destino.
+ * @brief Concatena una cadena al final de otra.
  *
- * Se asume que el buffer de destino tiene suficiente espacio
- * para alojar la cadena ya existente más la cadena de origen.
+ * @param destino Cadena destino donde se agregará el texto.
+ * @param origen Cadena que se agregará al final.
  *
- * @param destino Puntero a la cadena que será extendida (entrada/salida).
- * @param origen Puntero a la cadena que se agregará al final (entrada).
+ * @throw const char* Si alguno de los punteros es nulo.
+ *
+ * @note No se valida el tamaño del buffer destino.
  */
 void concatenar(char* destino, const char* origen) {
-    int i = 0;
-    while (destino[i] != '\0') i++;
-    int j = 0;
-    while (origen[j] != '\0') {
-        destino[i++] = origen[j++];
+    try {
+        if (!destino || !origen)
+            throw "Puntero nulo en concatenar().";
+
+        int i = 0;
+        while (destino[i] != '\0') i++;
+        int j = 0;
+        while (origen[j] != '\0') {
+            destino[i++] = origen[j++];
+        }
+        destino[i] = '\0';
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
     }
-    destino[i] = '\0';
 }
 
 /**
- * @brief Separa una línea de texto delimitada por comas en cuatro campos.
+ * @brief Separa una línea con formato "cedula,clave,nombre,dinero".
  *
- * Esta función espera que la línea contenga los campos: **cédula, clave, nombre, dinero**.
- * Asigna dinámicamente memoria para cada campo y los punteros de referencia
- * (cedula, clave, nombre, dinero) apuntarán a estas nuevas cadenas.
- * **Es responsabilidad del llamador liberar esta memoria con `delete[]`**.
+ * Asigna memoria dinámica para cada campo. Si ocurre un error,
+ * los punteros de salida quedan en `nullptr`.
  *
- * @param linea La cadena de entrada que contiene los campos separados por comas.
- * @param cedula Puntero a `char*` donde se almacenará la cédula (salida, memoria asignada dinámicamente).
- * @param clave Puntero a `char*` donde se almacenará la clave (salida, memoria asignada dinámicamente).
- * @param nombre Puntero a `char*` donde se almacenará el nombre (salida, memoria asignada dinámicamente).
- * @param dinero Puntero a `char*` donde se almacenará el dinero (salida, memoria asignada dinámicamente).
+ * @param linea Cadena de texto a dividir (entrada).
+ * @param cedula Referencia a puntero que recibirá la cédula.
+ * @param clave Referencia a puntero que recibirá la clave.
+ * @param nombre Referencia a puntero que recibirá el nombre.
+ * @param dinero Referencia a puntero que recibirá el dinero.
+ *
+ * @throw const char* Si la línea es nula, vacía o tiene menos de 4 campos.
+ *
+ * @note El usuario debe liberar la memoria asignada con `delete[]`.
  */
 void separarLinea(const char* linea, char*& cedula, char*& clave, char*& nombre, char*& dinero) {
-    int len = longitud(linea);
-    int campo = 0;
-    char buffer[200];
-    int pos = 0;
+    try {
+        if (!linea)
+            throw "Línea nula en separarLinea().";
 
-    cedula = clave = nombre = dinero = nullptr;
+        int len = longitud(linea);
+        if (len == 0)
+            throw "Línea vacía en separarLinea().";
 
-    for (int i = 0; i <= len; i++) {
-        if (linea[i] == ',' || linea[i] == '\0') {
-            buffer[pos] = '\0';
-            char* nuevo = new char[pos + 1];
-            copiar(nuevo, buffer);
+        int campo = 0;
+        char buffer[200];
+        int pos = 0;
 
-            if (campo == 0) cedula = nuevo;
-            else if (campo == 1) clave = nuevo;
-            else if (campo == 2) nombre = nuevo;
-            else if (campo == 3) dinero = nuevo;
+        cedula = clave = nombre = dinero = nullptr;
 
-            campo++;
-            pos = 0;
-        } else {
-            buffer[pos++] = linea[i];
+        for (int i = 0; i <= len; i++) {
+            if (linea[i] == ',' || linea[i] == '\0') {
+                buffer[pos] = '\0';
+                char* nuevo = new char[pos + 1];
+                copiar(nuevo, buffer);
+
+                if (campo == 0) cedula = nuevo;
+                else if (campo == 1) clave = nuevo;
+                else if (campo == 2) nombre = nuevo;
+                else if (campo == 3) dinero = nuevo;
+
+                campo++;
+                pos = 0;
+            } else {
+                buffer[pos++] = linea[i];
+            }
         }
+
+        if (campo < 4)
+            throw "Número de campos insuficiente en separarLinea().";
+
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
+        cedula = clave = nombre = dinero = nullptr;
     }
 }
 
 /**
- * @brief Compara lexicográficamente dos cadenas de caracteres.
+ * @brief Compara dos cadenas de texto.
  *
- * La comparación se realiza caracter por caracter hasta que se encuentra
- * una diferencia o se alcanza el terminador nulo en ambas.
+ * Devuelve `true` si son idénticas en contenido y longitud.
  *
- * @param a La primera cadena a comparar (entrada).
- * @param b La segunda cadena a comparar (entrada).
- * @return `true` si ambas cadenas son idénticas en contenido y longitud.
- * @return `false` en caso contrario.
+ * @param a Primera cadena (entrada).
+ * @param b Segunda cadena (entrada).
+ * @return `true` si son iguales, `false` en caso contrario.
+ *
+ * @throw const char* Si alguno de los punteros es nulo.
  */
 bool cadenasIguales(const char* a, const char* b) {
-    int i = 0;
-    while (a[i] != '\0' && b[i] != '\0') {
-        if (a[i] != b[i]) return false;
-        i++;
+    try {
+        if (!a || !b)
+            throw "Puntero nulo en cadenasIguales().";
+
+        int i = 0;
+        while (a[i] != '\0' && b[i] != '\0') {
+            if (a[i] != b[i]) return false;
+            i++;
+        }
+        return a[i] == b[i];
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
+        return false;
     }
-    return a[i] == b[i];
 }
 
 /**
- * @brief Verifica si una cadena de texto representa un número binario.
+ * @brief Verifica si una cadena está compuesta solo por '0' y '1'.
  *
- * Una cadena se considera binaria si está compuesta únicamente por los
- * caracteres '0' y '1'.
+ * @param texto Cadena a verificar.
+ * @return `true` si es binaria, `false` en caso contrario.
  *
- * @param texto La cadena de caracteres a verificar.
- * @return `true` si la cadena solo contiene '0' y '1'.
- * @return `false` si contiene cualquier otro caracter.
+ * @throw const char* Si el puntero es nulo o la cadena está vacía.
  */
 bool esBinario(const char* texto) {
-    for (int i = 0; texto[i] != '\0'; i++) {
-        if (texto[i] != '0' && texto[i] != '1') return false;
+    try {
+        if (!texto)
+            throw "Cadena nula en esBinario().";
+        if (texto[0] == '\0')
+            throw "Cadena vacía en esBinario().";
+
+        for (int i = 0; texto[i] != '\0'; i++) {
+            if (texto[i] != '0' && texto[i] != '1')
+                return false;
+        }
+        return true;
+    } catch (const char* msg) {
+        cerr << "[Error] " << msg << endl;
+        return false;
     }
-    return true;
 }

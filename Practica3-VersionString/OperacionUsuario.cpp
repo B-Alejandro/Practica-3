@@ -1,13 +1,22 @@
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
 #include "OperacionesUsuario.h"
 
 using namespace std;
 
 // ===========================================================
-// Función auxiliar: separa los campos de una línea CSV simple
+// === Función auxiliar: separa los campos de una línea CSV ===
 // ===========================================================
+/**
+ * @brief Separa una línea de texto CSV en sus campos: cédula, clave, nombre y saldo.
+ *
+ * @param linea Línea con formato "cedula,clave,nombre,saldo COP".
+ * @param cedula Variable de salida para la cédula.
+ * @param clave Variable de salida para la clave.
+ * @param nombre Variable de salida para el nombre.
+ * @param saldoStr Variable de salida para el saldo en formato texto.
+ * @return true si la línea se pudo descomponer correctamente, false si el formato es inválido.
+ */
 static bool descomponerLineaUsuario(
     const string& linea,
     string& cedula,
@@ -31,84 +40,108 @@ static bool descomponerLineaUsuario(
 }
 
 // ===========================================================
-// CONSULTAR SALDO
+// === CONSULTAR SALDO =======================================
 // ===========================================================
+/**
+ * @brief Muestra el saldo de un usuario, cobra 1000 COP por la consulta y actualiza el registro.
+ *
+ * @param linea Línea de texto con la información del usuario.
+ * @param cedulaBuscada Cédula del usuario que realiza la consulta.
+ * @return true si se encontró y actualizó el usuario, false en caso contrario.
+ */
 bool consultarSaldoUsuario(string& linea, const string& cedulaBuscada) {
-    string cedula, clave, nombre, saldoStr;
+    try {
+        string cedula, clave, nombre, saldoStr;
 
-    if (!descomponerLineaUsuario(linea, cedula, clave, nombre, saldoStr))
-        return false;
+        if (!descomponerLineaUsuario(linea, cedula, clave, nombre, saldoStr))
+            throw "Formato de registro inválido.";
 
-    if (cedula != cedulaBuscada)
-        return false;
+        if (cedula != cedulaBuscada)
+            return false;
 
-    // Extraer el número del saldo (antes de " COP")
-    int saldoNum = 0;
-    {
+        int saldoNum = 0;
         stringstream ss(saldoStr);
         ss >> saldoNum;
+
+        cout << "\n---------------------------------\n";
+        cout << "Usuario: " << nombre << endl;
+        cout << "Saldo actual: " << saldoNum << " COP\n";
+        cout << "Costo de la consulta: 1000 COP\n";
+
+        saldoNum = max(0, saldoNum - 1000);
+
+        cout << "Saldo después del cobro: " << saldoNum << " COP\n";
+        cout << "---------------------------------\n";
+
+        linea = cedula + "," + clave + "," + nombre + "," + to_string(saldoNum) + " COP";
+        return true;
     }
-
-    cout << "\n---------------------------------\n";
-    cout << "Usuario: " << nombre << endl;
-    cout << "Saldo actual: " << saldoNum << " COP\n";
-    cout << "Costo de la consulta: 1000 COP\n";
-
-    saldoNum -= 1000;
-    if (saldoNum < 0) saldoNum = 0;
-
-    cout << "Saldo después del cobro: " << saldoNum << " COP\n";
-    cout << "---------------------------------\n";
-
-    // Actualizar la línea con el nuevo saldo
-    string nuevoSaldo = to_string(saldoNum) + " COP";
-    linea = cedula + "," + clave + "," + nombre + "," + nuevoSaldo;
-
-    return true;
+    catch (const char* msg) {
+        cerr << "Error en consultarSaldoUsuario(): " << msg << endl;
+        return false;
+    }
 }
 
 // ===========================================================
-// RETIRAR DINERO
+// === RETIRAR DINERO ========================================
 // ===========================================================
+/**
+ * @brief Retira dinero del saldo de un usuario, cobrando 1000 COP por operación.
+ *        Valida que el monto ingresado sea un número entero positivo.
+ *
+ * @param linea Línea de texto con la información del usuario.
+ * @param cedulaBuscada Cédula del usuario que realiza el retiro.
+ * @param montoRetiro Monto solicitado a retirar (ingresado por el usuario).
+ * @return true si el retiro fue exitoso, false si hubo error o saldo insuficiente.
+ * @throws const char* Si el formato del registro o el monto son inválidos.
+ */
 bool modificarDineroUsuario(string& linea, const string& cedulaBuscada, int montoRetiro) {
-    string cedula, clave, nombre, saldoStr;
+    try {
+        string cedula, clave, nombre, saldoStr;
 
-    if (!descomponerLineaUsuario(linea, cedula, clave, nombre, saldoStr))
-        return false;
+        if (!descomponerLineaUsuario(linea, cedula, clave, nombre, saldoStr))
+            throw "Formato de registro inválido.";
 
-    if (cedula != cedulaBuscada)
-        return false;
+        if (cedula != cedulaBuscada)
+            return false;
 
-    int saldoNum = 0;
-    {
+        int saldoNum = 0;
         stringstream ss(saldoStr);
         ss >> saldoNum;
-    }
 
-    int costoOperacion = 1000;
-    int total = montoRetiro + costoOperacion;
+        // === Validar que el monto sea un número positivo ===
+        if (cin.fail() || montoRetiro <= 0) {
+            cin.clear();
+            while (cin.get() != '\n' && !cin.eof());
+            throw "El monto a retirar debe ser un número positivo.";
+        }
 
-    if (saldoNum < total) {
+        int costoOperacion = 1000;
+        int total = montoRetiro + costoOperacion;
+
+        if (saldoNum < total) {
+            cout << "\n---------------------------------\n";
+            cout << "Saldo insuficiente para retirar " << montoRetiro << " COP.\n";
+            cout << "Saldo disponible: " << saldoNum << " COP\n";
+            cout << "Costo total (retiro + operación): " << total << " COP\n";
+            cout << "---------------------------------\n";
+            return false;
+        }
+
+        saldoNum -= total;
+
         cout << "\n---------------------------------\n";
-        cout << "Saldo insuficiente para retirar " << montoRetiro << " COP.\n";
-        cout << "Saldo disponible: " << saldoNum << " COP\n";
-        cout << "Costo total (retiro + operación): " << total << " COP\n";
+        cout << "Retiro exitoso.\n";
+        cout << "Monto retirado: " << montoRetiro << " COP\n";
+        cout << "Costo de operación: " << costoOperacion << " COP\n";
+        cout << "Saldo restante: " << saldoNum << " COP\n";
         cout << "---------------------------------\n";
+
+        linea = cedula + "," + clave + "," + nombre + "," + to_string(saldoNum) + " COP";
+        return true;
+    }
+    catch (const char* msg) {
+        cerr << "Error en modificarDineroUsuario(): " << msg << endl;
         return false;
     }
-
-    saldoNum -= total;
-
-    cout << "\n---------------------------------\n";
-    cout << "Retiro exitoso.\n";
-    cout << "Monto retirado: " << montoRetiro << " COP\n";
-    cout << "Costo de operación: " << costoOperacion << " COP\n";
-    cout << "Saldo restante: " << saldoNum << " COP\n";
-    cout << "---------------------------------\n";
-
-    // Actualizar línea
-    string nuevoSaldo = to_string(saldoNum) + " COP";
-    linea = cedula + "," + clave + "," + nombre + "," + nuevoSaldo;
-
-    return true;
 }

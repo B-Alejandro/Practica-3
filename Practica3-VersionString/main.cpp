@@ -1,10 +1,9 @@
 /**
  * @file main.cpp
- * @brief Archivo principal del sistema de cajero automático v2.0.
+ * @brief Archivo principal del sistema de cajero automatico v2.0.
  *
- * Este archivo contiene la función main que gestiona la carga segura de datos,
- * verificación, encriptación y desencriptación de archivos de usuarios y administradores,
- * y la ejecución del menú principal del sistema.
+ * Gestiona carga segura, verificacion, encriptacion/desencriptacion,
+ * ejecucion del menu principal y guardado confiable de datos.
  */
 
 #include <iostream>
@@ -16,101 +15,112 @@
 using namespace std;
 
 /**
- * @brief Función principal de la aplicación.
+ * @brief Funcion principal de la aplicacion.
  *
- * Ejecuta la secuencia principal para cargar archivos de usuarios y administradores,
- * verificar y gestionar encriptación y desencriptación, mostrar datos para depuración,
- * iniciar el sistema de cajero y guardar cambios de forma segura.
+ * Ejecuta la secuencia principal de carga, encriptacion, desencriptacion,
+ * menu principal y guardado seguro de datos.
  *
- * @return Código de salida del programa. 0 para éxito, 1 para error.
+ * @return Codigo de salida del programa: 0 exito, 1 error controlado.
  */
 int main() {
-    const string rutaUsuarios = "../../Datos/usuarios.bin";   /**< Ruta del archivo usuarios */
-    const string rutaAdmins   = "../../Datos/sudo.bin";       /**< Ruta del archivo administradores */
-    int numUsuarios = 0, numAdmins = 0;                       /**< Contadores de registros */
-    const int SEMILLA = 4;                                    /**< Semilla para encriptación */
+    const string rutaUsuarios = "../../Datos/usuarios.bin";
+    const string rutaAdmins   = "../../Datos/sudo.bin";
+    const int SEMILLA = 4;
+    int numUsuarios = 0, numAdmins = 0;
 
-    cout << "================================================\n";
-    cout << "    SISTEMA DE CAJERO AUTOMATICO \n";
-    cout << "         Carga Segura de Datos\n";
-    cout << "================================================\n\n";
+    try {
+        cout << "================================================\n";
+        cout << "    SISTEMA DE CAJERO AUTOMATICO v2.0\n";
+        cout << "================================================\n\n";
 
-    // [1] Cargar archivos
-    cout << "[1/5] Cargando archivos del sistema...\n";
-    string* usuarios = leerArchivoLineas(rutaUsuarios.c_str(), numUsuarios);
-    string* admins   = leerArchivoLineas(rutaAdmins.c_str(), numAdmins);
+        // [1] Cargar archivos
+        cout << "[1/5] Cargando archivos del sistema...\n";
+        string* usuarios = leerArchivoLineas(rutaUsuarios.c_str(), numUsuarios);
+        string* admins   = leerArchivoLineas(rutaAdmins.c_str(), numAdmins);
 
-    if (!usuarios || numUsuarios == 0) {
-        cerr << "Error: No se pudieron cargar usuarios.\n";
-        return 1;
-    }
-    if (!admins || numAdmins == 0) {
-        cerr << "Error: No se pudieron cargar administradores.\n";
-        return 1;
-    }
+        if (!usuarios || numUsuarios == 0)
+            throw "Error: No se pudieron cargar usuarios.";
+        if (!admins || numAdmins == 0)
+            throw "Error: No se pudieron cargar administradores.";
 
-    cout << "Archivos cargados correctamente.\n";
-    cout << "  - Usuarios: " << numUsuarios << " registros\n";
-    cout << "  - Admins:   " << numAdmins << " registros\n\n";
+        cout << "Archivos cargados correctamente.\n";
+        cout << "  - Usuarios: " << numUsuarios << " registros\n";
+        cout << "  - Admins:   " << numAdmins << " registros\n\n";
 
-    // [2] Verificar si ya están encriptados
-    cout << "[2/5] Verificando estado de encriptacion...\n";
-    bool yaEncriptados = verificarEstadoEncriptacion(usuarios, admins);
+        // [2] Verificar estado de encriptacion
+        cout << "[2/5] Verificando estado de encriptacion...\n";
+        bool yaEncriptados = verificarEstadoEncriptacion(usuarios, admins);
 
-    if (!yaEncriptados) {
-        cout << "Archivos en texto plano → Encriptando con semilla " << SEMILLA << "...\n";
+        if (!yaEncriptados) {
+            cout << "Archivos en texto plano → Encriptando con semilla " << SEMILLA << "...\n";
+            encriptarArchivo(admins, numAdmins, SEMILLA);
+            encriptarArchivo(usuarios, numUsuarios, SEMILLA);
+
+            guardarArchivoLineas(rutaUsuarios.c_str(), usuarios, numUsuarios);
+            guardarArchivoLineas(rutaAdmins.c_str(), admins, numAdmins);
+
+            cout << "Archivos encriptados y guardados.\n\n";
+
+            delete[] usuarios;
+            delete[] admins;
+
+            usuarios = leerArchivoLineas(rutaUsuarios.c_str(), numUsuarios);
+            admins   = leerArchivoLineas(rutaAdmins.c_str(), numAdmins);
+
+            if (!usuarios || !admins)
+                throw "Error al recargar los archivos encriptados.";
+
+            cout << "Archivos recargados.\n\n";
+        } else {
+            cout << "Los archivos ya estan encriptados.\n\n";
+        }
+
+        // [3] Desencriptar en memoria
+        cout << "[" << (yaEncriptados ? "3" : "4") << "/5] Desencriptando datos en memoria...\n";
+        desencriptarArchivo(admins, numAdmins, SEMILLA);
+        desencriptarArchivo(usuarios, numUsuarios, SEMILLA);
+        cout << "Datos desencriptados y listos para usar.\n\n";
+
+        // Mostrar datos desencriptados (modo debug)
+        cout << "--- DEPURACION: Usuarios desencriptados ---\n";
+        mostrarLineas(usuarios, numUsuarios);
+        cout << "--- DEPURACION: Administradores desencriptados ---\n";
+        mostrarLineas(admins, numAdmins);
+
+        // [4] Iniciar sistema
+        cout << "[" << (yaEncriptados ? "4" : "5") << "/5] Iniciando sistema de cajero...\n";
+        cout << "\n\n\n\n\n\n\n\n\n\n";
+
+        try {
+            menuPrincipal(usuarios, numUsuarios, admins, numAdmins);
+        } catch (const char* e) {
+            cerr << "[Error en menuPrincipal] " << e << endl;
+        }
+
+        // [5] Guardar cambios
+        cout << "\nGuardando cambios de forma segura...\n";
         encriptarArchivo(admins, numAdmins, SEMILLA);
         encriptarArchivo(usuarios, numUsuarios, SEMILLA);
 
         guardarArchivoLineas(rutaUsuarios.c_str(), usuarios, numUsuarios);
         guardarArchivoLineas(rutaAdmins.c_str(), admins, numAdmins);
 
-        cout << "Archivos encriptados y guardados.\n\n";
+        cout << "Datos guardados y encriptados correctamente.\n";
 
         delete[] usuarios;
         delete[] admins;
 
-        usuarios = leerArchivoLineas(rutaUsuarios.c_str(), numUsuarios);
-        admins   = leerArchivoLineas(rutaAdmins.c_str(), numAdmins);
-
-        cout << "Archivos recargados.\n\n";
-    } else {
-        cout << "Los archivos ya están encriptados.\n\n";
+        cout << "\n================================================\n";
+        cout << "     Sesion finalizada correctamente\n";
+        cout << "================================================\n";
+        return 0;
     }
-
-    // [3] Desencriptar en memoria
-    cout << "[" << (yaEncriptados ? "3" : "4") << "/5] Desencriptando datos en memoria...\n";
-    desencriptarArchivo(admins, numAdmins, SEMILLA);
-    desencriptarArchivo(usuarios, numUsuarios, SEMILLA);
-    cout << "Datos desencriptados y listos para usar.\n\n";
-
-    // Mostrar datos desencriptados (debug)
-    cout << "--- DEPURACION: Usuarios desencriptados ---\n";
-    mostrarLineas(usuarios, numUsuarios);
-    cout << "--- DEPURACION: Administradores desencriptados ---\n";
-    mostrarLineas(admins, numAdmins);
-
-    // [4] Iniciar sistema
-    cout << "[" << (yaEncriptados ? "4" : "5") << "/5] Iniciando sistema de cajero...\n";
-    cout << "\n\n\n\n\n\n\n\n\n\n";
-
-    menuPrincipal(usuarios, numUsuarios, admins, numAdmins);
-
-    // [5] Guardar cambios
-    cout << "\nGuardando cambios de forma segura...\n";
-    encriptarArchivo(admins, numAdmins, SEMILLA);
-    encriptarArchivo(usuarios, numUsuarios, SEMILLA);
-
-    guardarArchivoLineas(rutaUsuarios.c_str(), usuarios, numUsuarios);
-    guardarArchivoLineas(rutaAdmins.c_str(), admins, numAdmins);
-
-    cout << "Datos guardados y encriptados correctamente.\n";
-
-    delete[] usuarios;
-    delete[] admins;
-
-    cout << "\n================================================\n";
-    cout << "     Sesión finalizada correctamente\n";
-    cout << "================================================\n";
-    return 0;
+    catch (const char* e) {
+        cerr << "[Error controlado] " << e << endl;
+        return 1;
+    }
+    catch (...) {
+        cerr << "[Error desconocido] Ocurrio un problema inesperado.\n";
+        return 1;
+    }
 }
